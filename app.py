@@ -4,11 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, render_template 
 from flask_cors import CORS 
-import whois
+# import whois  <== تم حذفه من هنا
 from datetime import datetime
 
 # ----------------------------------------------------
-# 💡 التعديلات الضرورية لـ Vercel (المُعدَّلة):
+# 💡 التعديلات الضرورية لـ Vercel:
 # ----------------------------------------------------
 # تحديد المسار الحالي لملف app.py
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -55,11 +55,13 @@ def analyze_url(url):
     if '@' in url: points += 5
     if domain.count('.') > 3: points += 1
 
-    # القاعدة 6: فحص عُمر النطاق (Whois)
+    # القاعدة 6: فحص عُمر النطاق (Whois) - ✅ تم الإصلاح هنا
     try:
+        import whois # يتم استدعاء المكتبة داخل الـ try لضمان عدم انهيار التطبيق
         w = whois.whois(domain)
         today = datetime.now().date()
         creation_date = w.creation_date
+        
         if isinstance(creation_date, list):
             creation_date = creation_date[0]
             
@@ -68,7 +70,7 @@ def analyze_url(url):
             if age_in_days < 90: points += 4 
             elif age_in_days < 180: points += 2 
     except Exception: 
-        points += 1 
+        points += 1 # إذا فشلت whois، نمرر الخطأ ونكتفي بإضافة نقطة شك واحدة
     
     # القاعدة 7: فحص سمعة IP
     points += check_ip_reputation(domain)
