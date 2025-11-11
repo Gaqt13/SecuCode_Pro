@@ -2,10 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SecuCode - كاشف الروابط المشبوهة</title>
+    <title>SecuCode - ÙØ§Ø´Ù Ø§ÙØ±ÙØ§Ø¨Ø· Ø§ÙÙØ´Ø¨ÙÙØ©</title>
     
     <style>
-        /* التنسيق: تصميم احترافي بسيط */
+        /* Ø§ÙØªÙØ³ÙÙ: ØªØµÙÙÙ Ø§Ø­ØªØ±Ø§ÙÙ Ø¨Ø³ÙØ· */
         body {font-family: 'Tahoma', sans-serif;margin: 0;padding: 0;background-color: #f0f4f8;text-align: right;direction: rtl;display: flex;justify-content: center;align-items: center;min-height: 100vh;}
         .container {width: 90%;max-width: 600px;background-color: #ffffff;padding: 40px;border-radius: 12px;box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);border-top: 5px solid #007bff;}
         h1 {color: #007bff;text-align: center;margin-bottom: 30px;font-size: 1.8em;}
@@ -15,7 +15,7 @@
         button:hover {background-color: #0056b3;}
         button:active {transform: scale(0.98);}
         #result {margin-top: 30px;padding: 20px;border-radius: 8px;text-align: center;font-weight: bold;font-size: 1.2em;color: #333;min-height: 60px;display: flex;justify-content: center;align-items: center;transition: background-color 0.4s;}
-        /* تنسيقات النتائج */
+        /* ØªÙØ³ÙÙØ§Øª Ø§ÙÙØªØ§Ø¦Ø¬ */
         .result-safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; } 
         .result-medium { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; } 
         .result-high { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; } 
@@ -24,13 +24,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 SecuCode - فاحص الروابط</h1>
-        <p>أدخل الرابط الذي تشك به لمعرفة ما إذا كان موقع احتيال (Phishing) أم لا:</p>
+        <h1>ð SecuCode - ÙØ§Ø­Øµ Ø§ÙØ±ÙØ§Ø¨Ø·</h1>
+        <p>Ø£Ø¯Ø®Ù Ø§ÙØ±Ø§Ø¨Ø· Ø§ÙØ°Ù ØªØ´Ù Ø¨Ù ÙÙØ¹Ø±ÙØ© ÙØ§ Ø¥Ø°Ø§ ÙØ§Ù ÙÙÙØ¹ Ø§Ø­ØªÙØ§Ù (Phishing) Ø£Ù ÙØ§:</p>
         
-        <input type="url" id="linkInput" placeholder="أدخل الرابط هنا (مثال: https://suspect.com)" required>
-        <button onclick="checkLink()">افحص الرابط</button>
+        <input type="url" id="linkInput" placeholder="Ø£Ø¯Ø®Ù Ø§ÙØ±Ø§Ø¨Ø· ÙÙØ§ (ÙØ«Ø§Ù: https://suspect.com)" required>
+        <button onclick="checkLink()">Ø§ÙØ­Øµ Ø§ÙØ±Ø§Ø¨Ø·</button>
 
-        <div id="result">النتائج ستظهر هنا...</div>
+        <div id="result">Ø§ÙÙØªØ§Ø¦Ø¬ Ø³ØªØ¸ÙØ± ÙÙØ§...</div>
     </div>
 
     <script>
@@ -39,18 +39,17 @@
             const resultDiv = document.getElementById('result');
             
             resultDiv.className = 'result-loading';
-            resultDiv.innerHTML = "جاري التحليل... (يتم فحص 7 قواعد أمنية)";
+            resultDiv.innerHTML = "Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ... (ÙØªÙ ÙØ­Øµ 7 ÙÙØ§Ø¹Ø¯ Ø£ÙÙÙØ©)";
 
             if (!link) {
                 resultDiv.className = 'result-high';
-                resultDiv.innerHTML = "❌ الرجاء إدخال رابط صالح.";
+                resultDiv.innerHTML = "â Ø§ÙØ±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù Ø±Ø§Ø¨Ø· ØµØ§ÙØ­.";
                 return;
             }
 
             try {
-                // !!! ملاحظة مهمة: سيتم استبدال هذا العنوان برابط Render العام !!!
-                // حالياً هو يستخدم العنوان المحلي الافتراضي للاختبار
-                const apiUrl = 'http://127.0.0.1:5000/check_link'; 
+                // ð ÙØ°Ø§ ÙÙ Ø§ÙØªØ¹Ø¯ÙÙ Ø§ÙØ¶Ø±ÙØ±Ù: Ø§Ø³ØªØ®Ø¯Ø§Ù Ø±Ø§Ø¨Ø· Vercel Ø§ÙÙÙØ´ÙØ± Ø¨Ø¯ÙØ§Ù ÙÙ Ø§ÙØ±Ø§Ø¨Ø· Ø§ÙÙØ­ÙÙ
+                const apiUrl = 'https://secu-code-pro.vercel.app/check_link'; // â ØªÙ ØªØ¹Ø¯ÙÙ Ø§ÙØ±Ø§Ø¨Ø· ÙÙØ§
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -65,7 +64,7 @@
 
                 if (data.error) {
                     resultDiv.className = 'result-high';
-                    resultDiv.innerHTML = `خطأ في الخادم: ${data.error}`;
+                    resultDiv.innerHTML = `Ø®Ø·Ø£ ÙÙ Ø§ÙØ®Ø§Ø¯Ù: ${data.error}`;
                 } else {
                     let resultClass = '';
                     if (data.certainty === 'High') {
@@ -77,15 +76,4 @@
                     }
                     
                     resultDiv.className = resultClass;
-                    resultDiv.innerHTML = `نتيجة التحليل: <strong>${data.result}</strong><br>(نقاط الشك: ${data.score} نقطة)`;
-                }
-
-            } catch (error) {
-                console.error('Fetch Error:', error);
-                resultDiv.className = 'result-high';
-                resultDiv.innerHTML = "❌ خطأ في الاتصال بالخادم. تأكد من أن API Flask يعمل.";
-            }
-        }
-    </script>
-</body>
-</html>
+                    resultDiv.innerHTML = `ÙØª�
