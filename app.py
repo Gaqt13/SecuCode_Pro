@@ -8,9 +8,13 @@ import whois
 from datetime import datetime
 
 # ----------------------------------------------------
-# 💡 التعديلات الضرورية لـ Vercel:
+# 💡 التعديلات الضرورية لـ Vercel (المُعدَّلة):
 # ----------------------------------------------------
-template_dir = os.path.abspath('./Frontend')
+# تحديد المسار الحالي لملف app.py
+basedir = os.path.abspath(os.path.dirname(__file__))
+# بناء المسار الصحيح لمجلد Frontend
+template_dir = os.path.join(basedir, 'Frontend')
+
 app = Flask(__name__, template_folder=template_dir)
 CORS(app) 
 # ----------------------------------------------------
@@ -113,4 +117,4 @@ def check_link():
 
     return jsonify({"link": link,"score": score,"certainty": certainty,"result": result})
 
-# تم حذف شرط if __name__ == '__main__': في هذا المكان
+# تم حذف شرط if __name__ == '__main__':
