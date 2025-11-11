@@ -1,12 +1,25 @@
+import os # ✅ مضاف: ضروري لمعرفة مسارات الملفات
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, request, jsonify
+# ✅ مضاف: render_template لعرض صفحة index.html
+from flask import Flask, request, jsonify, render_template 
 from flask_cors import CORS 
 import whois
 from datetime import datetime
 
-app = Flask(__name__)
+# ----------------------------------------------------
+# 💡 التعديلات الضرورية لـ Vercel:
+# ----------------------------------------------------
+# 1. تحديد المسار المطلق لمجلد القوالب (Templates)
+# هذا يضمن أن Vercel سيعثر على مجلد 'Frontend'
+template_dir = os.path.abspath('./Frontend')
+
+# 2. إنشاء كائن التطبيق وتمرير مسار القوالب إليه
+# هذا يحل مشكلة الـ 'Not Found' على Vercel
+app = Flask(__name__, template_folder=template_dir)
+# ----------------------------------------------------
+
 CORS(app) 
 
 # --- وظيفة فحص سمعة IP (القاعدة 7) ---
@@ -76,6 +89,15 @@ def analyze_url(url):
         points += 1 
 
     return points
+
+# ----------------------------------------------------
+# 💡 المسار الرئيسي لصفحة الويب (مضاف):
+# ----------------------------------------------------
+@app.route('/')
+def index():
+    # هيعرض ملف index.html من مجلد Frontend
+    return render_template('index.html')
+
 
 # واجهة الـ API
 @app.route('/check_link', methods=['POST'])
