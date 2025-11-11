@@ -51,7 +51,7 @@ def analyze_url(url):
     if '@' in url: points += 5 
     if domain.count('.') > 3: points += 1 
 
-    # القاعدة 6: فحص عُمر النطاق (Whois) - ✅ معالجة استثناءات Vercel
+    # القاعدة 6: فحص عُمر النطاق (Whois) - مع معالجة استثناءات Vercel
     try:
         w = whois.whois(domain)
         today = datetime.now().date()
@@ -91,7 +91,7 @@ def index():
     return render_template('index.html')
 
 
-# واجهة الـ API (المسار /check_link)
+# واجهة الـ API
 @app.route('/check_link', methods=['POST'])
 def check_link():
     data = request.get_json()
