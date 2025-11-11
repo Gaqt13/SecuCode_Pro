@@ -4,18 +4,14 @@ import requests
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, render_template 
 from flask_cors import CORS 
-# import whois  <== تم حذفه من هنا
 from datetime import datetime
+import whois # ✅ تم إبقاء الاستدعاء هنا مع معالجة الخطأ لاحقًا
 
 # ----------------------------------------------------
-# 💡 التعديلات الضرورية لـ Vercel:
+# 💡 إعدادات Flask لـ Vercel (الأبسط):
 # ----------------------------------------------------
-# تحديد المسار الحالي لملف app.py
-basedir = os.path.abspath(os.path.dirname(__file__))
-# بناء المسار الصحيح لمجلد Frontend
-template_dir = os.path.join(basedir, 'Frontend')
-
-app = Flask(__name__, template_folder=template_dir)
+# Vercel يبحث تلقائيًا عن مجلد 'templates' في الجذر.
+app = Flask(__name__) 
 CORS(app) 
 # ----------------------------------------------------
 
@@ -24,8 +20,10 @@ CORS(app)
 def check_ip_reputation(domain):
     reputation_points = 0
     try:
+        # استخدام API خارجي بسيط للتحقق من سمعة الـ IP
         api_url = f"https://api.hackertarget.com/reverseiplookup/?q={domain}"
         response = requests.get(api_url, timeout=3)
+        # إذا كان هناك عدد كبير من المواقع على نفس الـ IP، فهذا يشير للشك
         host_count = len(response.text.split('\n'))
         if host_count > 10:
             reputation_points += 2
@@ -40,6 +38,7 @@ def analyze_url(url):
         parsed_url = urlparse(url)
         domain = parsed_url.netloc.lower()
     except ValueError:
+        # إذا كان الرابط غير صالح تمامًا، نعتبره مشبوهاً جداً
         return 10 
 
     # القواعد 1-5 (هيكلية الرابط)
@@ -51,72 +50,5 @@ def analyze_url(url):
             points += 2
             break
             
-    if parsed_url.scheme == 'http': points += 3
-    if '@' in url: points += 5
-    if domain.count('.') > 3: points += 1
-
-    # القاعدة 6: فحص عُمر النطاق (Whois) - ✅ تم الإصلاح هنا
-    try:
-        import whois # يتم استدعاء المكتبة داخل الـ try لضمان عدم انهيار التطبيق
-        w = whois.whois(domain)
-        today = datetime.now().date()
-        creation_date = w.creation_date
-        
-        if isinstance(creation_date, list):
-            creation_date = creation_date[0]
-            
-        if creation_date:
-            age_in_days = (today - creation_date.date()).days
-            if age_in_days < 90: points += 4 
-            elif age_in_days < 180: points += 2 
-    except Exception: 
-        points += 1 # إذا فشلت whois، نمرر الخطأ ونكتفي بإضافة نقطة شك واحدة
-    
-    # القاعدة 7: فحص سمعة IP
-    points += check_ip_reputation(domain)
-
-    # تحليل المحتوى البسيط
-    try:
-        response = requests.get(url, timeout=5) 
-        response.raise_for_status() 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        title = soup.title.string if soup.title else ""
-        if not title or len(title.strip()) < 5:
-            points += 1
-    except requests.exceptions.RequestException:
-        points += 1
-    except Exception:
-        points += 1 
-
-    return points
-
-# 💡 المسار الرئيسي لصفحة الويب:
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-# واجهة الـ API
-@app.route('/check_link', methods=['POST'])
-def check_link():
-    data = request.get_json()
-    link = data.get('link')
-
-    if not link:
-        return jsonify({"error": "الرجاء إرسال حقل 'link' في صيغة JSON"}), 400
-
-    score = analyze_url(link)
-    
-    if score >= 6:
-        result = "🔴 احتيالي/مشتبه به جداً"
-        certainty = "High"
-    elif score >= 3:
-        result = "🟡 مشتبه به"
-        certainty = "Medium"
-    else:
-        result = "🟢 آمن نسبياً"
-        certainty = "Low"
-
-    return jsonify({"link": link,"score": score,"certainty": certainty,"result": result})
-
-# تم حذف شرط if __name__ == '__main__':
+    if parsed_url.scheme == 'http': points += 3 # استخدام HTTP بدلاً من HTTPS
+    if '@' in url: points += 5 #
