@@ -48,8 +48,8 @@
             }
 
             try {
-                // ✅ المسار النسبي: /api/check_link هو الأفضل والأقوى لـ Vercel
-                const apiUrl = '/api/check_link'; 
+                // ✅ هذا هو المسار النهائي والأبسط الذي يتطابق مع app.py
+                const apiUrl = '/check_link'; 
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
