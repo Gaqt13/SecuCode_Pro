@@ -3,47 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة اختبار</title>
-    <!-- تضمين Tailwind CSS لتصميم سريع وجميل -->
+    <title>مدقق الروابط الأمني</title>
+    <!-- تضمين Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* تعيين خط Inter الأساسي، مع دعم الخطوط العربية */
         body {
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #111827; /* خلفية داكنة */
+        }
+        /* تصميم خاص لزر الإرسال */
+        #analyze-button {
+            transition: all 0.2s ease-in-out;
+        }
+        #analyze-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
-    <!-- حاوية مركزية للتطبيق -->
-    <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-md text-center border-t-4 border-blue-500">
-        <!-- العنوان الرئيسي - هذا هو النص الذي يمكنك تجربته وتغييره -->
-        <h1 id="main-title" class="text-3xl font-extrabold text-gray-800 mb-4">
-            مرحباً! قم بتعديل هذا العنوان الآن
-        </h1>
+<body class="p-4 md:p-8 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-2xl">
         
-        <!-- فقرة توضيحية -->
-        <p class="text-gray-600 mb-6 leading-relaxed">
-            لترى التغيير، قم بتحرير النص أعلاه، ثم حدث المعاينة. يجب أن يظهر النص الجديد بدلاً من هذا.
-        </p>
-        
-        <!-- زر للتفاعل -->
-        <button onclick="alert('تم النقر على الزر!')"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
-            زر تجريبي
-        </button>
+        <!-- العنوان الرئيسي والوصف -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-3">
+                مدقق الروابط الأمني 
+            </h1>
+            <p class="text-gray-400 text-lg">أدخل رابط الموقع للتحليل الأمني الفوري</p>
+        </header>
+
+        <!-- صندوق الإدخال -->
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-xl mb-8">
+            <form id="analysis-form" class="space-y-4">
+                <input type="url" id="link-input" placeholder="أدخل رابط الموقع هنا (مثل: https://example.com)" required
+                       class="w-full px-5 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <button type="submit" id="analyze-button"
+                        class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    تحليل الرابط الآن
+                </button>
+            </form>
+            
+            <!-- رسائل الحالة (خطأ/تحقق) -->
+            <div id="status-message" class="mt-4 hidden p-3 rounded-lg text-center font-medium"></div>
+        </div>
+
+        <!-- مؤشر التحميل -->
+        <div id="loading-spinner" class="hidden text-center mt-8">
+            <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-blue-400 mt-2">جاري التحليل الأمني... قد يستغرق الأمر بضع ثوانٍ</p>
+        </div>
+
+        <!-- منطقة عرض النتائج -->
+        <div id="results-container" class="mt-8 hidden">
+            <!-- سيتم إضافة بطاقة النتائج هنا بواسطة JavaScript -->
+        </div>
+
     </div>
 
     <script>
-        // دالة لعرض رسالة (بدلاً من alert)
-        function alert(message) {
-            const container = document.getElementById('message-container');
-            if (container) {
-                container.textContent = message;
-                container.classList.remove('hidden');
-                setTimeout(() => container.classList.add('hidden'), 3000);
-            } else {
-                console.log(message);
+        document.getElementById('analysis-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            analyzeLink();
+        });
+
+        const linkInput = document.getElementById('link-input');
+        const statusMessage = document.getElementById('status-message');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsContainer = document.getElementById('results-container');
+        const analyzeButton = document.getElementById('analyze-button');
+
+        // دالة مساعدة لتحديد الألوان بناءً على مستوى الخطورة
+        function getRiskColor(risk) {
+            switch (risk.toLowerCase()) {
+                case 'low': return 'bg-green-600';
+                case 'medium': return 'bg-yellow-500';
+                case 'high': return 'bg-red-600';
+                case 'critical': return 'bg-purple-700';
+                default: return 'bg-gray-500';
             }
+        }
+
+        // دالة مساعدة لعرض رسالة حالة عامة (خطأ/تحقق)
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.classList.remove('hidden', 'bg-red-700', 'bg-yellow-700');
+            statusMessage.classList.add(type === 'error' ? 'bg-red-700' : 'bg-yellow-700', 'text-white');
+            resultsContainer.classList.add('hidden');
+        }
+
+        // الدالة الرئيسية لتحليل الرابط
+        async function analyzeLink() {
+            const link = linkInput.value.trim();
+            statusMessage.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = 'جاري التحليل...';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ link: link }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayResults(result);
+                } else if (result.status === 'validation_error') {
+                    showStatus(result.message, 'error');
+                } else {
+                    showStatus(result.message || 'حدث خطأ غير متوقع أثناء التحليل.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                showStatus('فشل في الاتصال بالخادم. تأكد من أن الخادم يعمل.', 'error');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = 'تحليل الرابط الآن';
+            }
+        }
+
+        // دالة لعرض النتائج بشكل احترافي
+        function displayResults(data) {
+            resultsContainer.classList.remove('hidden');
+            
+            const riskColor = getRiskColor(data.risk_score);
+
+            resultsContainer.innerHTML = `
+                <div class="bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl border-t-8 ${riskColor}">
+                    <h2 class="text-3xl font-extrabold text-white mb-4 border-b border-gray-700 pb-3">
+                        تقرير التحليل الأمني
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- الرابط المحلل -->
+                        <div class="p-3 bg-gray-700 rounded-lg text-sm truncate">
+                            <span class="text-gray-400 font-semibold">الرابط:</span> 
+                            <span class="text-blue-400">${data.link}</span>
+                        </div>
+
+                        <!-- رسالة النتيجة الرئيسية -->
+                        <div class="flex flex-col items-center justify-center p-4 rounded-xl ${riskColor} text-white font-bold text-xl shadow-lg">
+                            ${data.result_message}
+                        </div>
+
+                        <!-- بطاقات الإحصائيات -->
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            
+                            <!-- مستوى الخطورة -->
+                            <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
+                                <p class="text-gray-400 text-sm">مستوى الخطورة</p>
+                                <p class="text-white text-2xl font-bold">${data.risk_score}</p>
+                            </div>
+                            
+                            <!-- النقاط المشبوهة -->
+                            <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
+                                <p class="text-gray-400 text-sm">نقاط مشبوهة</p>
+                                <p class="text-white text-2xl font-bold">${data.suspicious_points}</p>
+                            </div>
+                        </div>
+
+                        <!-- تفاصيل التحذيرات -->
+                        <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
+                            <h3 class="text-lg font-bold text-white mb-2">
+                                التفاصيل
+                            </h3>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex justify-between items-center border-b border-gray-600 pb-1">
+                                    <span class="font-semibold">عدد التحذيرات المكتشفة:</span> 
+                                    <span>${data.detected_warnings}</span>
+                                </li>
+                                <li class="pt-1">
+                                    <span class="font-semibold text-gray-400">تحذير محتوى الصفحة:</span><br>
+                                    <span class="text-gray-300">${data.page_content_warning}</span>
+                                </li>
+                                <li class="pt-1">
+                                    <span class="font-semibold text-gray-400">رسالة النظام:</span><br>
+                                    <span class="text-gray-300">${data.message}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
     </script>
 </body>
