@@ -3,108 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecuCode - نظام تحليل الروابط</title>
+    <title>SecuCode - نظام تحليل الروابط v{{ cache_buster }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS بسيط مطابق للمظهر الوظيفي القديم */
+        /* --- الألوان والتنسيق الأنيق (مطابق للصورة المرفقة) --- */
+        :root {
+            --primary-blue: #3498db; 
+            --success-green: #2ecc71; 
+            --warning-yellow: #f1c40f; 
+            --danger-red: #e74c3c; 
+            --bg-light: #f9fafb; 
+            --text-dark: #2c3e50;
+            --border-soft: #ecf0f1;
+        }
+
         body {
-            font-family: Tahoma, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
+            align-items: flex-start;
             min-height: 100vh;
         }
 
         .container {
             background-color: white;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); 
+            padding: 0; /* لإدارة التباعد الداخلي داخل البطاقات */
             max-width: 500px;
             width: 100%;
             margin-top: 50px;
+            overflow: hidden; /* للتحكم بحواف البنرات */
         }
-
-        /* العناوين والأزرار */
-        h2 { color: #333; margin-bottom: 5px; text-align: center; }
-        .subtitle { font-size: 0.9em; color: #666; margin-bottom: 20px; text-align: center; }
         
-        #linkInput { 
-            width: 100%; 
-            padding: 8px; 
-            margin-bottom: 10px; 
-            border: 1px solid #ccc; 
-            box-sizing: border-box; 
+        /* البانر الأزرق العلوي */
+        .header-banner {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .header-banner h2 { color: white; margin: 0; font-size: 1.8rem; }
+        .header-banner .subtitle { color: rgba(255, 255, 255, 0.8); margin-top: 5px; font-size: 1rem; }
+
+        .content-area {
+            padding: 25px;
         }
 
-        #checkButton { 
-            width: 100%; 
-            padding: 10px; 
-            background-color: #4CAF50; /* لون بسيط */
-            color: white; 
-            border: none; 
-            cursor: pointer; 
+        /* حقول الإدخال والأزرار */
+        #linkInput {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        #linkInput:focus { border-color: var(--primary-blue); outline: none; }
+
+        #checkButton {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
             transition: background-color 0.3s;
         }
-        #checkButton:hover { background-color: #45a049; }
+        #checkButton:hover { background-color: #2980b9; }
 
         /* رسائل الخطأ والتحميل */
         .message-box {
             padding: 10px;
             margin-top: 15px;
             border-radius: 4px;
-            font-weight: bold;
+            font-weight: 600;
             text-align: center;
             display: none;
         }
-        .error-message {
-            background-color: #ffe0e0;
-            color: red;
-            border: 1px solid red;
-        }
-        .loading-message {
-            color: blue;
-        }
+        .error-message { background-color: #fceae9; color: var(--danger-red); border: 1px solid var(--danger-red); }
+        .loading-message { color: var(--primary-blue); }
 
         /* لوحة النتائج */
         .result-panel {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
+            margin-top: 25px;
+            border-top: 1px solid var(--border-soft);
+            padding-top: 20px;
         }
 
         .result-summary {
-            padding: 10px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: white;
+            padding: 12px;
+            border-radius: 8px;
             text-align: center;
+            color: white;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
+        .status-success { background-color: var(--success-green); }
+        .status-warning { background-color: var(--warning-yellow); color: var(--text-dark); }
+        .status-error { background-color: var(--danger-red); }
 
-        /* تخصيص الألوان للحالات */
-        .status-success { background-color: #4CAF50; }
-        .status-warning { background-color: #FFC107; color: #333; }
-        .status-error { background-color: #f44336; }
+        .detail-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed var(--border-soft); }
+        .alert-box { background-color: #fff9e0; color: #b8860b; padding: 10px; border: 1px solid #ffeeba; border-radius: 6px; margin-top: 15px; font-size: 0.9em; }
+
+        /* --- التجاوب (Responsive) --- */
+        @media (max-width: 600px) {
+            .container { margin-top: 20px; }
+            .content-area { padding: 15px; }
+            .result-summary { flex-direction: column; gap: 5px; }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>SecuCode Analyzer</h2>
-        <p class="subtitle">أدخل الرابط للفحص الأمني</p>
-        
-        <input type="text" id="linkInput" placeholder="أدخل الرابط هنا..." aria-label="أدخل رابط الفحص">
-        
-        <button id="checkButton">افحص الرابط الآن</button>
+        <div class="header-banner">
+            <h2>SecuCode 🔎</h2>
+            <p class="subtitle">نظام تحليل الروابط الاحترافي</p>
+        </div>
 
-        <div id="errorMessage" class="message-box error-message" role="alert"></div>
-        <div id="loadingMessage" class="message-box loading-message" style="display: none;">جاري التحليل...</div>
+        <div class="content-area">
+            <p style="margin-bottom: 5px; color: var(--text-dark);">أدخل الرابط الذي تشك به لفحصه أمنياً:</p>
+            <input type="text" id="linkInput" placeholder="https://example.com" aria-label="أدخل رابط الفحص">
+            
+            <button id="checkButton">افحص الرابط الآن</button>
 
-        <div id="resultPanel" class="result-panel" style="display: none;">
-            </div>
+            <div id="errorMessage" class="message-box error-message" role="alert"></div>
+            <div id="loadingMessage" class="message-box loading-message" style="display: none;">جاري معالجة طلب التحليل... يرجى الانتظار ⏳</div>
+
+            <div id="resultPanel" class="result-panel" style="display: none;">
+                </div>
+        </div>
     </div>
 
     <script>
@@ -127,7 +169,7 @@
 
             if (!link) {
                 loadingMessage.style.display = 'none';
-                errorMessage.textContent = '❌ الرجاء إدخال رابط للتحليل.';
+                errorMessage.textContent = '❌ فشل التحقق: الرجاء إدخال رابط.';
                 errorMessage.style.display = 'block';
                 checkButton.textContent = 'افحص الرابط الآن';
                 checkButton.disabled = false;
@@ -142,23 +184,18 @@
                 });
 
                 const data = await response.json();
-
-                // إخفاء رسالة التحميل
                 loadingMessage.style.display = 'none';
 
-                // 2. معالجة الاستجابة (بما في ذلك خطأ التحقق 400)
+                // 2. معالجة الاستجابة (خطأ التحقق 400 هو الحل الوظيفي)
                 if (response.status === 400 || data.status === 'validation_error') {
-                    // هذا سيظهر رسالة الخطأ للمدخلات غير الصالحة (الحروف العشوائية)
                     errorMessage.textContent = data.message || 'خطأ في صيغة الرابط.';
                     errorMessage.style.display = 'block';
                     
                 } else if (response.status === 200) {
-                    // عرض النتائج إذا كان الرابط صالحاً وتم تحليله بنجاح
                     displayAnalysisResult(data);
                     resultPanel.style.display = 'block';
                     
                 } else {
-                    // أي خطأ آخر
                      errorMessage.textContent = `⚠️ خطأ في الخادم (الكود: ${response.status}): ${data.message || 'يرجى المحاولة لاحقاً.'}`;
                      errorMessage.style.display = 'block';
                 }
@@ -181,15 +218,15 @@
             switch (data.status) {
                 case 'success':
                     statusClass = 'status-success';
-                    statusText = 'آمن نسبيًا';
+                    statusText = '✅ آمن نسبيًا';
                     break;
                 case 'warning':
                     statusClass = 'status-warning';
-                    statusText = 'تحذير / مراجعة';
+                    statusText = '⚠️ يحتاج لمراجعة';
                     break;
                 case 'error':
                     statusClass = 'status-error';
-                    statusText = 'خطر محتمل';
+                    statusText = '❌ خطر محتمل';
                     break;
                 default:
                     statusClass = 'status-warning';
@@ -198,16 +235,19 @@
             
             resultPanel.innerHTML = `
                 <div class="result-summary ${statusClass}">
-                    النتيجة: ${statusText} | نقاط الشك الكلية: ${data.suspicious_points || 'N/A'}
+                    <span>النتيجة: ${statusText}</span>
+                    <span>نقاط الشك الكلية: ${data.suspicious_points || 'N/A'}</span>
                 </div>
                 
-                <p><strong>الرابط المفحوص:</strong> <span style="direction: ltr;">${data.link || 'N/A'}</span></p>
-                <p><strong>تصنيف الخطورة:</strong> ${data.risk_score || 'N/A'}</p>
-                <p><strong>عدد التحذيرات:</strong> ${data.detected_warnings || '0'}</p>
+                <h3 style="font-weight: 600; font-size: 1.2rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 5px;">تقرير التحليل التفصيلي 📊</h3>
+
+                <div class="detail-row"><strong>الرابط قيد الفحص:</strong> <span style="direction: ltr;">${data.link || 'N/A'}</span></div>
+                <div class="detail-row"><strong>تصنيف الخطورة:</strong> ${data.risk_score || 'N/A'}</div>
+                <div class="detail-row"><strong>عدد التحذيرات المكتشفة:</strong> ${data.detected_warnings || '0'}</div>
                 
-                <div style="margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: #fff;">
-                    <strong>رسالة محتوى الصفحة:</strong> 
-                    <br>${data.page_content_warning || 'لا توجد تفاصيل إضافية.'}
+                <div class="alert-box">
+                    <p style="font-weight: 700; margin-bottom: 5px;">🚨 تحذيرات تفصيلية في محتوى الصفحة:</p>
+                    <p>${data.page_content_warning || 'لا توجد تفاصيل إضافية.'}</p>
                 </div>
             `;
         }
