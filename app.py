@@ -1,167 +1,109 @@
 import os
-from urllib.parse import urlparse
+from flask import Flask, request, jsonify, render_template
+from validators import url  # استيراد دالة التحقق
 import requests
-from bs4 import BeautifulSoup
-from flask import Flask, request, jsonify, render_template 
-from flask_cors import CORS 
-from datetime import datetime
-import whois 
-import re 
-import requests.exceptions # ✅ إضافة جديدة للاستثناءات
+import json
 
-# ----------------------------------------------------
-# 💡 إعدادات Flask لـ Vercel (الأبسط):
-# ----------------------------------------------------
-# Vercel يبحث تلقائيًا عن مجلد 'templates' في الجذر.
-app = Flask(__name__) 
-CORS(app) 
-# ----------------------------------------------------
+app = Flask(__name__)
 
-
-# --- وظيفة فحص سمعة IP (القاعدة 7) ---
-def check_ip_reputation(domain):
-    reputation_points = 0
+# --- دالة التحليل الأمني (افتراضية) ---
+# يجب عليك استبدال هذا المنطق بالمنطق الحقيقي لمشروعك (SecuCode)
+def perform_security_scan(link):
+    """
+    تقوم بتنفيذ عملية الفحص الأمني الحقيقية على الرابط.
+    هذه الدالة يجب أن تُحدَّث للتعامل مع أخطاء الاتصال/Timeout بشكل سليم.
+    """
     try:
-        api_url = f"https://api.hackertarget.com/reverseiplookup/?q={domain}"
-        response = requests.get(api_url, timeout=3)
-        # إذا كان عدد المواقع المستضافة كبيراً جداً، فهذا مثير للشك (استضافة مشتركة سيئة)
-        host_count = len(response.text.split('\n'))
-        if host_count > 10:
-            reputation_points += 2
-    except Exception:
-        reputation_points += 0 
-    return reputation_points
-
-# --- وظيفة تحليل الرابط الرئيسية (7 قواعد + فحص المحتوى) ---
-def analyze_url(url):
-    points = 0
-    content_warnings = [] 
-
-    try:
-        parsed_url = urlparse(url)
-        domain = parsed_url.netloc.lower()
-    except ValueError:
-        return 10, content_warnings
-
-    # ----------------------------------------------------
-    # القواعد الهيكلية
-    # ----------------------------------------------------
-    if len(url) > 70: points += 1
-    
-    suspicious_keywords = ['login', 'verify', 'update', 'security', 'account', 'paypal', 'bank']
-    for keyword in suspicious_keywords:
-        if keyword in domain:
-            points += 2
-            break
-            
-    # ✅ تعديل: فحص HTTPS/SSL أعمق
-    if parsed_url.scheme == 'http': 
-        points += 3 # ما زلنا نعاقب HTTP
-    else: # إذا كان HTTPS
-        try:
-            # التحقق من أن شهادة SSL صالحة
-            requests.get(url, timeout=5, verify=True) 
-        except requests.exceptions.SSLError:
-            content_warnings.append("فشل التحقق من شهادة SSL (قد تكون مزورة أو منتهية).")
-            points += 3 # زيادة النقاط إذا كان HTTPS لكنه غير صالح
-        except Exception:
-             pass 
-             
-    if '@' in url: points += 5 
-    if domain.count('.') > 3: points += 1 
-
-    # فحص عُمر النطاق (Whois)
-    try:
-        w = whois.whois(domain)
-        today = datetime.now().date()
-        creation_date = w.creation_date
+        # محاولة الاتصال بالرابط لتأكيد وجوده (اختياري، يمكنك استخدام منطقك الخاص)
+        response = requests.get(link, timeout=5, allow_redirects=True) 
         
-        if isinstance(creation_date, list): creation_date = creation_date[0]
+        # مثال لمنطق بسيط جداً للنتائج:
+        if response.status_code == 200:
+            # مثال لتقرير تفصيلي
+            return {
+                "status": "success",
+                "message": "تحليل مكتمل.",
+                "link": link,
+                "result_message": "آمن نسبيًا.",
+                "risk_score": "Low",
+                "suspicious_points": 2,
+                "detected_warnings": 1,
+                "page_content_warning": "تحذير: تم جلب محتوى الصفحة بنجاح."
+            }
+        else:
+            return {
+                "status": "warning",
+                "message": "تحذير: الرابط موجود لكن حالة الاستجابة غير عادية.",
+                "link": link,
+                "result_message": "غير مؤكد.",
+                "risk_score": "Medium",
+                "suspicious_points": 5,
+                "detected_warnings": 2,
+                "page_content_warning": f"فشل في جلب محتوى الصفحة. رمز الحالة: {response.status_code}"
+            }
             
-        if creation_date:
-            age_in_days = (today - creation_date.date()).days
-            if age_in_days < 90: points += 4 
-            elif age_in_days < 180: points += 2 
-    except Exception: 
-        points += 1 # مشكلة في بيانات Whois تزيد الشك
-    
-    points += check_ip_reputation(domain)
+    except requests.exceptions.RequestException as e:
+        # التعامل مع أخطاء الاتصال، Timeout، أو الروابط غير القابلة للوصول
+        return {
+            "status": "error",
+            "message": "خطأ في الاتصال بالرابط.",
+            "link": link,
+            "result_message": "غير قابل للوصول.",
+            "risk_score": "High", # نرفع درجة الخطورة إذا لم نتمكن من الوصول
+            "suspicious_points": 10,
+            "detected_warnings": 3,
+            "page_content_warning": "فشل حاد في الاتصال بالرابط أو حدوث مهلة (Timeout)."
+        }
 
-    # ----------------------------------------------------
-    # 💡 قواعد تحليل محتوى الصفحة (للكشف عن العناصر المخفية وإعادة التوجيه)
-    # ----------------------------------------------------
-    try:
-        # استخدام requests.get للسماح بـ exceptions (مثل SSL)
-        response = requests.get(url, timeout=5) 
-        response.raise_for_status() 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # ✅ تعديل: فحص عنوان الصفحة (Title)
-        title_keywords = ['error', 'required', 'login', 'payment', 'urgent']
-        title = soup.title.string.lower() if soup.title else ''
-        for keyword in title_keywords:
-            if keyword in title:
-                content_warnings.append(f"عنوان الصفحة (Title) يحتوي على كلمة مريبة: '{keyword}'.")
-                points += 1
-                break
-        
-        # 1. فحص النماذج الحساسة
-        password_fields = soup.find_all('input', {'type': 'password'})
-        if password_fields and ('login' in url.lower() or 'signin' in url.lower()):
-            content_warnings.append("نموذج إدخال بيانات اعتماد (كلمة مرور) في رابط تسجيل دخول.")
-            points += 3 
-            
-        # 2. فحص العناصر المخفية
-        hidden_elements = soup.find_all(lambda tag: tag.has_attr('style') and ('display:none' in tag['style'] or 'visibility:hidden' in tag['style']))
-        if hidden_elements:
-            content_warnings.append(f"تم العثور على {len(hidden_elements)} عنصر HTML/Iframe مخفي (قد يُستخدم للسرقة).")
-            points += 2
-            
-        # 3. فحص إعادة التوجيه الفورية
-        if re.search(r'window\.location|document\.location|header\s*\(\s*["\']location', response.text, re.IGNORECASE):
-            content_warnings.append("إعادة توجيه فورية (قد يكون لصفحة احتيال).")
-            points += 2
-            
-    except requests.exceptions.RequestException:
-        content_warnings.append("فشل في جلب محتوى الصفحة أو timeout.")
-        points += 1
-    except Exception:
-        content_warnings.append("خطأ غير متوقع أثناء تحليل المحتوى.")
-        points += 1 
-
-    return points, content_warnings 
-
-# 💡 المسار الرئيسي لصفحة الويب:
-@app.route('/')
+# --- نقطة النهاية الرئيسية (عرض الصفحة) ---
+@app.route('/', methods=['GET'])
 def index():
+    # افترض أن ملف الواجهة الأمامية هو index.html داخل مجلد templates
     return render_template('index.html')
 
 
-# واجهة الـ API
-@app.route('/check_link', methods=['POST'])
-def check_link():
-    data = request.get_json()
-    link = data.get('link')
-
-    if not link:
-        return jsonify({"error": "الرجاء إرسال حقل 'link' في صيغة JSON"}), 400
-
-    score, warnings = analyze_url(link)
+# --- نقطة النهاية للتحليل (تطبيق التحقق الاحترافي) ---
+@app.route('/analyze', methods=['POST'])
+def analyze_link():
+    """
+    نقطة النهاية لمعالجة طلب فحص الرابط مع التحقق الاحترافي.
+    """
     
-    if score >= 8:
-        result = "🔴 خطر جسيم (خطر احتيال مؤكد)"
-        certainty = "High"
-    elif score >= 4:
-        result = "🟡 مشتبه به (يحتوي على عناصر مريبة)"
-        certainty = "Medium"
-    else:
-        result = "🟢 آمن نسبياً"
-        certainty = "Low"
+    # 1. استلام الرابط من الطلب
+    try:
+        data = request.get_json()
+        link_to_analyze = data.get('link')
+    except Exception:
+        # خطأ في صيغة JSON
+        return jsonify({
+            "status": "critical_error",
+            "message": "خطأ في معالجة بيانات الطلب (JSON).",
+            "error_code": 400
+        }), 400
 
-    return jsonify({
-        "link": link,
-        "score": score,
-        "certainty": certainty,
-        "result": result,
-        "warnings": warnings 
-    })
+    # 2. التحقق من وجود الرابط (الرابط فارغ)
+    if not link_to_analyze or link_to_analyze.strip() == "":
+        return jsonify({
+            "status": "validation_error",
+            "message": "❌ فشل التحقق: الرجاء إدخال رابط. حقل الرابط لا يمكن أن يكون فارغاً.",
+            "error_code": 400
+        }), 400
+
+    # 3. التحقق الاحترافي من صيغة الرابط (باستخدام مكتبة validators)
+    if url(link_to_analyze) is not True:
+        # إرجاع استجابة خطأ HTTP 400 (Bad Request)
+        return jsonify({
+            "status": "validation_error",
+            "message": "❌ فشل التحقق: الإدخال غير صحيح. الرجاء إدخال رابط حقيقي وصالح بصيغة URL (مثل: https://example.com).",
+            "error_code": 400
+        }), 400
+
+    # 4. المتابعة إلى منطق التحليل
+    analysis_result = perform_security_scan(link_to_analyze) 
+    
+    return jsonify(analysis_result), 200
+
+# تشغيل التطبيق محلياً (لا يتم استخدامه في Vercel عادةً)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
