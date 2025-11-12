@@ -1,56 +1,136 @@
 import os
-import time  # لإضافة متغير الوقت لحل مشكلة الكاش
+import time
 from flask import Flask, request, jsonify, render_template
 from validators import url  # للتحقق الاحترافي من الروابط
 import requests
 import json
-import re # ✅ تم إضافة مكتبة التعبيرات العادية لتطبيق القواعد
+import re # لمكتبة التعبيرات العادية لتطبيق القواعد
 
 app = Flask(__name__)
 
-# --- تعريف الـ 20 قاعدة أمنية (Security Rules) ---
-# كل قاعدة هي دالة Lambda يتم تطبيقها على الرابط المدخل.
+# --- تعريف الـ 20 قاعدة أمنية مع الوصف التفصيلي ---
+# كل عنصر هو قاموس يحتوي على (دالة الفحص، الاسم، الوصف التفصيلي للخطر)
 SECURITY_RULES = [
-    # 1. استخدام اختصار URL (موقع إخفاء)
-    lambda link: any(service in link.lower() for service in ["bit.ly", "goo.gl", "tinyurl", "ow.ly", "cutt.ly", "is.gd"]),
-    # 2. وجود رقم IP بدلاً من اسم نطاق (قد يشير إلى خادم مؤقت)
-    lambda link: bool(re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', link)),
-    # 3. وجود رموز @ في الرابط (تستخدم أحياناً لخداع المتصفح بشأن الوجهة الحقيقية)
-    lambda link: '@' in link,
-    # 4. طول الرابط مريب (أطول من 80 حرفاً)
-    lambda link: len(link) > 80,
-    # 5. وجود كلمات شائعة للخداع (مثل gift, prize, free)
-    lambda link: any(word in link.lower() for word in ['gift', 'prize', 'free', 'win', 'claim', 'discount']),
-    # 6. عدم استخدام HTTPS (أخطر المخالفات)
-    lambda link: link.lower().startswith('http://'),
-    # 7. استخدام منافذ غير قياسية في الرابط (قد يشير إلى خدمة غير تقليدية)
-    lambda link: bool(re.search(r':\d{4,}', link)), # منفذ بأربعة أرقام أو أكثر
-    # 8. محاولة تمرير معلمات (parameters) ضخمة
-    lambda link: link.count('=') > 5,
-    # 9. وجود أكثر من نطاق فرعي واحد (كثرة النطاقات الفرعية العميقة)
-    lambda link: link.count('.') > 3,
-    # 10. انتهاء النطاق بمواقع غير شائعة (قد تشير إلى مواقع تم إنشاؤها حديثاً لغرض معين)
-    lambda link: link.lower().endswith(('.cf', '.tk', '.ga', '.ml', '.xyz')),
-    # 11. استخدام كلمة "secure" أو "safe" كجزء من الرابط (محاولة إيهام المستخدم بالأمان)
-    lambda link: any(word in link.lower() for word in ['secure', 'safe', 'trust', 'login', 'verify']) and 'https' not in link.lower(),
-    # 12. تكرار النطاق الفرعي (subdomain repetition) مثل google.google.com
-    lambda link: len(link.split('.')) > 2 and link.split('.')[0].lower() == link.split('.')[-2].lower(),
-    # 13. استخدام نطاق بأرقام (قد يشير إلى تلاعب)
-    lambda link: any(char.isdigit() for char in link.split('.')[1]) and link.count('.') >= 1,
-    # 14. وجود سلسلة طويلة من الأرقام في مسار الملف (قد تشير إلى ملفات تم تحميلها بشكل عشوائي)
-    lambda link: bool(re.search(r'/\d{8,}/', link)),
-    # 15. وجود أحرف كبيرة وصغيرة بشكل عشوائي (يستخدم لتفادي فلاتر)
-    lambda link: len(link) > 30 and link != link.lower() and link != link.upper(),
-    # 16. استخدام رمز الـ hash (#) كعلامة (قد يستخدم لتمرير بيانات غير مرئية للتحليل)
-    lambda link: '#' in link,
-    # 17. وجود كلمة 'admin' أو 'upload' في الرابط
-    lambda link: any(word in link.lower() for word in ['admin', 'upload', 'config']),
-    # 18. الرابط ينتهي بملف تنفيذي مشبوه
-    lambda link: link.lower().endswith(('.exe', '.bat', '.cmd', '.scr')),
-    # 19. محاولة إيهام باستخدام بروتوكول داخل المسار (مثلاً: https://google.com/http:/malware.com)
-    lambda link: link.count('http') > 1,
-    # 20. مطابقة اسم النطاق لأحد المواقع المعروفة ولكن به حرف مفقود أو زائد (Typosquatting)
-    lambda link: any(re.search(rf'f[ae]ceb?ook|go0gle|appple', link.lower()))
+    {
+        "check": lambda link: any(service in link.lower() for service in ["bit.ly", "goo.gl", "tinyurl", "ow.ly", "cutt.ly", "is.gd"]),
+        "name": "اختصار الرابط (URL Shortener)",
+        "risk": "قد يخفي الوجهة الحقيقية الضارة خلف رابط قصير وموثوق.",
+        "points": 3
+    },
+    {
+        "check": lambda link: bool(re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', link)),
+        "name": "استخدام رقم IP مباشر",
+        "risk": "قد يشير إلى خادم مؤقت أو موقع غير مسجل رسمياً، يستخدم لتجنب فحص DNS.",
+        "points": 4
+    },
+    {
+        "check": lambda link: '@' in link,
+        "name": "وجود رمز @ في الرابط",
+        "risk": "يستخدم لخداع المتصفح والزائر حول الوجهة الحقيقية للرابط (Phishing).",
+        "points": 5
+    },
+    {
+        "check": lambda link: len(link) > 80,
+        "name": "الطول المبالغ فيه للرابط",
+        "risk": "الروابط الطويلة جداً تستخدم أحياناً لإخفاء محتوى ضار أو لتجنب الفلاتر الأمنية.",
+        "points": 2
+    },
+    {
+        "check": lambda link: any(word in link.lower() for word in ['gift', 'prize', 'free', 'win', 'claim', 'discount']),
+        "name": "استخدام كلمات خداع شائعة",
+        "risk": "يشير إلى محاولة خداع اجتماعي أو إغراء المستخدم لتقديم بيانات حساسة.",
+        "points": 3
+    },
+    {
+        "check": lambda link: link.lower().startswith('http://'),
+        "name": "بروتوكول HTTP غير الآمن",
+        "risk": "الرابط غير مشفر (غير HTTPS)، مما يعرض بيانات المستخدمين (مثل كلمات المرور) للتجسس.",
+        "points": 6
+    },
+    {
+        "check": lambda link: bool(re.search(r':\d{4,}', link)),
+        "name": "استخدام منفذ غير قياسي",
+        "risk": "قد يشير إلى تشغيل خدمات غير تقليدية أو غير معتادة على المنافذ المعروفة.",
+        "points": 2
+    },
+    {
+        "check": lambda link: link.count('=') > 5,
+        "name": "كثرة المتغيرات في الرابط",
+        "risk": "قد تكون محاولة لحقن أو تمرير معلمات ضخمة غير مرغوب فيها.",
+        "points": 2
+    },
+    {
+        "check": lambda link: link.count('.') > 3,
+        "name": "كثرة النطاقات الفرعية العميقة",
+        "risk": "تستخدم لتقليد المواقع الشرعية (مثل: secure.login.google.com.xyz).",
+        "points": 3
+    },
+    {
+        "check": lambda link: link.lower().endswith(('.cf', '.tk', '.ga', '.ml', '.xyz')),
+        "name": "انتهاء نطاق مشبوه (TLD)",
+        "risk": "امتدادات النطاقات هذه غالباً ما تستخدم في حملات التصيد والاحتيال لأنها مجانية أو رخيصة.",
+        "points": 4
+    },
+    {
+        "check": lambda link: any(word in link.lower() for word in ['secure', 'safe', 'trust', 'login', 'verify']) and 'https' not in link.lower(),
+        "name": "كلمات أمان زائفة بدون تشفير",
+        "risk": "محاولة إيهام المستخدم بالأمان (مثل رابط فيه 'secure' ولكنه HTTP).",
+        "points": 5
+    },
+    {
+        "check": lambda link: len(link.split('.')) > 2 and link.split('.')[0].lower() == link.split('.')[-2].lower(),
+        "name": "تكرار النطاق الفرعي",
+        "risk": "نوع من الخداع لتمرير اسم النطاق الأساسي مرتين لخداع العين.",
+        "points": 2
+    },
+    {
+        "check": lambda link: any(char.isdigit() for char in link.split('.')[1]) and link.count('.') >= 1,
+        "name": "نطاق رئيسي يحتوي على أرقام",
+        "risk": "النطاقات الرئيسية التي تحتوي على أرقام (مثل: pay123.com) غالباً ما تكون مشبوهة.",
+        "points": 3
+    },
+    {
+        "check": lambda link: bool(re.search(r'/\d{8,}/', link)),
+        "name": "سلسلة أرقام طويلة في المسار",
+        "risk": "قد تشير إلى ملفات تم تحميلها عشوائياً أو مسار مخفي وضخم.",
+        "points": 2
+    },
+    {
+        "check": lambda link: len(link) > 30 and link != link.lower() and link != link.upper(),
+        "name": "أحرف كبيرة وصغيرة عشوائية",
+        "risk": "تستخدم لتجاوز فلاتر البريد المزعج والفلاتر الأمنية البسيطة.",
+        "points": 1
+    },
+    {
+        "check": lambda link: '#' in link,
+        "name": "استخدام رمز الـ Hash (#) كعلامة",
+        "risk": "يستخدم لتمرير بيانات غير مرئية أو لتوجيه المستخدم إلى جزء معين من الصفحة.",
+        "points": 1
+    },
+    {
+        "check": lambda link: any(word in link.lower() for word in ['admin', 'upload', 'config']),
+        "name": "كلمات إدارة وحساسة في الرابط",
+        "risk": "قد يشير إلى محاولة الوصول لصفحة إدارة أو تحميل ملفات حساسة.",
+        "points": 4
+    },
+    {
+        "check": lambda link: link.lower().endswith(('.exe', '.bat', '.cmd', '.scr')),
+        "name": "الانتهاء بملف تنفيذي ضار",
+        "risk": "يشير إلى أن الرابط سيقوم بتحميل أو تشغيل ملف تنفيذي مباشرة على جهاز المستخدم.",
+        "points": 7
+    },
+    {
+        "check": lambda link: link.count('http') > 1,
+        "name": "تكرار البروتوكول",
+        "risk": "محاولة خداع متقدمة لتمرير http/https داخل مسار الرابط (مثلاً: https://google.com/http:/malware).",
+        "points": 5
+    },
+    {
+        "check": lambda link: any(re.search(rf'f[ae]ceb?ook|go0gle|appple', link.lower())),
+        "name": "خطأ إملائي في النطاق (Typosquatting)",
+        "risk": "انتحال شخصية المواقع الكبرى باستخدام أخطاء إملائية (مثل goog1e.com) لسرقة بيانات الاعتماد.",
+        "points": 7
+    }
 ]
 
 
@@ -63,14 +143,13 @@ def perform_security_scan(link):
     
     # 1. فحص الاتصال بالرابط
     try:
-        # وقت استجابة أطول قليلاً للروابط المشبوهة
         response = requests.get(link, timeout=10, allow_redirects=True) 
         status_code = response.status_code
         
         if status_code != 200:
             suspicious_points += 5
             detected_warnings += 1
-            page_content_warning = f"تحذير: حالة الاستجابة غير ناجحة. الرمز: {status_code}"
+            page_content_warning = f"تحذير: الرابط يسبب خطأ {status_code}. (هذا يُعتبر مشبوهاً)."
         else:
             page_content_warning = "تم جلب محتوى الصفحة بنجاح."
             
@@ -84,32 +163,36 @@ def perform_security_scan(link):
     violated_rules = []
     for i, rule in enumerate(SECURITY_RULES):
         try:
-            if rule(link):
-                suspicious_points += 2 # كل قاعدة تخترق تزيد نقطتين
+            if rule["check"](link):
+                suspicious_points += rule["points"] # إضافة النقاط المخصصة للقاعدة
                 detected_warnings += 1
-                violated_rules.append(f"القاعدة {i+1} تم اختراقها.")
+                # تضمين اسم القاعدة ووصفها التفصيلي في النتيجة
+                violated_rules.append({
+                    "name": rule["name"],
+                    "risk_description": rule["risk"],
+                    "points_added": rule["points"]
+                })
         except Exception as e:
-            # لتجنب توقف البرنامج بسبب خطأ غير متوقع في قاعدة معينة
-            print(f"Error applying rule {i+1}: {e}") 
+            print(f"Error applying rule {rule['name']}: {e}") 
             pass
 
     # 3. تحديد مستوى الخطورة بناءً على النقاط
     risk_score = "Low"
     result_message = "آمن نسبيًا: لم يتم اكتشاف مخاطر واضحة."
 
-    if suspicious_points > 25:
+    if suspicious_points > 35:
         risk_score = "Critical"
-        result_message = "خطير! يحتوي على عدد كبير من نقاط الضعف والمخالفات الأمنية."
-    elif suspicious_points > 15:
+        result_message = "خطير! يحتوي على عدد كبير من نقاط الضعف والمخالفات الأمنية، مما يشير لاحتمالية عالية لكونه رابط تصيد أو ضار."
+    elif suspicious_points > 20:
         risk_score = "High"
-        result_message = "مرتفع: تم اكتشاف مخالفات هيكلية وسلوكية في الرابط."
-    elif suspicious_points > 5:
+        result_message = "مرتفع: تم اكتشاف مخالفات هيكلية وسلوكية متعددة في الرابط. يفضل تجنبه."
+    elif suspicious_points > 10:
         risk_score = "Medium"
-        result_message = "متوسط: يحتوي على بعض العناصر المشبوهة. استخدم بحذر."
+        result_message = "متوسط: يحتوي على بعض العناصر المشبوهة التي قد تشكل خطراً. استخدم بحذر."
     
     # 4. إعادة النتيجة
     return {
-        "status": "success" if suspicious_points <= 5 else "warning" if suspicious_points <= 15 else "error",
+        "status": "success" if suspicious_points <= 10 else "warning" if suspicious_points <= 20 else "error",
         "message": f"تحليل مكتمل. تم تطبيق {len(SECURITY_RULES)} قاعدة فحص.",
         "link": link,
         "result_message": result_message,
@@ -123,7 +206,6 @@ def perform_security_scan(link):
 # --- نقطة النهاية الرئيسية (حل مشكلة الكاش) ---
 @app.route('/', methods=['GET'])
 def index():
-    # إضافة متغير الوقت لإجبار المتصفح على تحميل نسخة جديدة في كل مرة
     cache_buster = int(time.time()) 
     return render_template('index.html', cache_buster=cache_buster)
 
@@ -142,7 +224,6 @@ def analyze_link():
             "error_code": 400
         }), 400
 
-    # 1. التحقق من أن الحقل ليس فارغاً
     if not link_to_analyze or link_to_analyze.strip() == "":
         return jsonify({
             "status": "validation_error",
@@ -150,11 +231,9 @@ def analyze_link():
             "error_code": 400
         }), 400
 
-    # 2. التحقق من صيغة الرابط (إضافة بروتوكول افتراضي إذا لم يكن موجوداً)
     if not link_to_analyze.lower().startswith(('http://', 'https://')):
         link_to_analyze = 'https://' + link_to_analyze
     
-    # تحقق احترافي إضافي
     try:
         if url(link_to_analyze) is not True:
              return jsonify({
@@ -166,7 +245,6 @@ def analyze_link():
          pass
 
 
-    # 3. المتابعة إلى منطق التحليل
     analysis_result = perform_security_scan(link_to_analyze) 
     
     return jsonify(analysis_result), 200
