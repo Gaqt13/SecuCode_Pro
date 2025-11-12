@@ -3,167 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecuCode - نظام تحليل الروابط الاحترافي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>SecuCode // Cyber Link Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #007bff; /* أزرق أساسي */
-            --secondary-color: #6c757d; /* رمادي ثانوي */
-            --success-color: #28a745; /* أخضر للنجاح */
-            --warning-color: #ffc107; /* أصفر للتحذير */
-            --danger-color: #dc3545; /* أحمر للخطر */
-            --bg-light: #f8f9fa; /* خلفية خفيفة */
-            --text-dark: #343a40; /* نص غامق */
+            /* الألوان السيبرانية */
+            --bg-dark: #121212; /* خلفية داكنة جداً */
+            --cyber-blue: #00e5ff; /* أزرق نيون/سيبراني */
+            --cyber-green: #00ff88; /* أخضر نيون/سيبراني */
+            --text-light: #e0e0e0; /* نص فاتح */
+            --text-secondary: #999; /* نص ثانوي */
+            --danger-neon: #ff073a; /* أحمر نيون */
+            --card-bg: #1e1e1e; /* خلفية البطاقات */
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* يبدأ من الأعلى */
+            align-items: flex-start;
             min-height: 100vh;
         }
 
         .container {
-            background-color: #ffffff;
+            background-color: var(--card-bg);
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.15); /* توهج خفيف */
+            padding: 40px;
+            max-width: 650px;
             width: 100%;
             margin-top: 50px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
         }
 
-        /* --- العناوين --- */
+        /* --- العناوين السيبرانية --- */
         h2 {
-            font-size: 2rem;
-            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace; /* خط أحادي التباعد للمسة تقنية */
+            font-size: 2.5rem;
+            color: var(--cyber-blue);
+            text-shadow: 0 0 10px var(--cyber-blue);
             margin-bottom: 0.5rem;
+            letter-spacing: 2px;
         }
         .subtitle {
             font-size: 1.1rem;
-            color: var(--secondary-color);
-            margin-bottom: 25px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
         }
 
         /* --- حقل الإدخال والزر --- */
         #linkInput {
             width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            border: 2px solid #ced4da;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #2a2a2a;
+            border: 1px solid var(--cyber-blue);
+            color: var(--text-light);
             border-radius: 8px;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: box-shadow 0.3s, border-color 0.3s;
+            box-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
         }
         #linkInput:focus {
-            border-color: var(--primary-color);
+            border-color: var(--cyber-green);
             outline: none;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 15px var(--cyber-green);
         }
 
         #checkButton {
             width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
-            color: white;
+            padding: 15px;
+            background-color: var(--cyber-green);
+            color: var(--bg-dark);
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
         #checkButton:hover {
-            background-color: #0056b3;
+            background-color: #00c76f;
+            box-shadow: 0 0 15px var(--cyber-green);
         }
         #checkButton:active {
-            transform: scale(0.99);
+            transform: translateY(1px);
         }
 
         /* --- رسالة الخطأ --- */
         .error-message {
-            background-color: #f8d7da;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
+            background-color: #381212;
+            color: var(--danger-neon);
+            border: 1px solid var(--danger-neon);
             padding: 15px;
-            margin-top: 20px;
+            margin-top: 25px;
             border-radius: 8px;
             font-weight: bold;
             display: none;
+            box-shadow: 0 0 8px var(--danger-neon);
         }
 
         /* --- لوحة النتائج --- */
         .result-panel {
-            margin-top: 30px;
-            border-top: 3px solid #eee;
-            padding-top: 20px;
+            margin-top: 35px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            padding-top: 25px;
         }
 
         .result-summary {
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             text-align: center;
-            color: white;
-            font-size: 1.2rem;
+            color: var(--bg-dark);
+            font-size: 1.3rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
         }
 
-        /* تخصيص الألوان بناءً على الحالة */
-        .status-success { background-color: var(--success-color); }
-        .status-warning { background-color: var(--warning-color); color: var(--text-dark); }
-        .status-error { background-color: var(--danger-color); }
+        /* تخصيص الألوان والحماية بناءً على الحالة */
+        .status-success { background-color: var(--cyber-green); box-shadow: 0 0 10px var(--cyber-green); }
+        .status-warning { background-color: var(--cyber-blue); color: white; box-shadow: 0 0 10px var(--cyber-blue); }
+        .status-error { background-color: var(--danger-neon); color: white; box-shadow: 0 0 10px var(--danger-neon); }
 
         .detail-report h3 {
-            color: var(--primary-color);
-            border-bottom: 2px solid #eee;
+            color: var(--cyber-blue);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.5);
             padding-bottom: 8px;
             margin-bottom: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
         }
 
         .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #eee;
+            padding: 10px 0;
+            border-bottom: 1px dashed #3a3a3a;
+            font-family: 'Share Tech Mono', monospace;
         }
         .detail-row strong {
-            color: var(--text-dark);
+            color: var(--text-light);
         }
         .detail-row span {
             font-weight: bold;
         }
 
         .warning-box {
-            background-color: #fff3cd;
-            color: #856404;
+            background-color: #381212;
+            color: var(--danger-neon);
             padding: 15px;
-            border: 1px solid #ffeeba;
+            border: 1px solid var(--danger-neon);
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 25px;
             font-size: 0.95rem;
+            box-shadow: 0 0 5px var(--danger-neon);
+            font-family: 'Share Tech Mono', monospace;
         }
 
         /* --- التجاوب (Responsive) --- */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
+        @media (max-width: 600px) {
             .container {
-                margin-top: 20px;
                 padding: 20px;
+                margin-top: 15px;
+            }
+            h2 {
+                font-size: 2rem;
             }
             .result-summary {
                 flex-direction: column;
-                gap: 5px;
+                gap: 10px;
             }
         }
     </style>
@@ -171,10 +187,10 @@
 <body>
 
     <div class="container">
-        <h2 class="text-center">SecuCode 🛡️</h2>
-        <p class="subtitle text-center">نظام تحليل الروابط الاحترافي الآمن</p>
+        <h2 class="text-center">SECURE CODE // 🛡️</h2>
+        <p class="subtitle text-center">نظام تحليل الروابط السيبراني</p>
         
-        <input type="text" id="linkInput" placeholder="أدخل الرابط الذي تشك به لفحصه أمنياً (مثال: https://example.com)" aria-label="أدخل رابط الفحص">
+        <input type="text" id="linkInput" placeholder="أدخل الرابط للفحص الأمني..." aria-label="أدخل رابط الفحص">
         
         <button id="checkButton">افحص الرابط الآن</button>
 
@@ -196,20 +212,20 @@
             // 1. تنظيف النتائج والرسائل السابقة
             errorMessage.style.display = 'none';
             resultPanel.style.display = 'none';
-            resultPanel.innerHTML = '<p style="text-align: center; color: var(--secondary-color);">جاري التحليل... يرجى الانتظار.</p>';
+            resultPanel.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">جاري تحليل المصفوفات... يرجى الانتظار.</p>';
             
             if (!link) {
-                errorMessage.textContent = '❌ فشل التحقق: الرجاء إدخال رابط.';
+                errorMessage.textContent = '❌ [ERROR] INPUT_MISSING: الرجاء إدخال رابط للتحليل.';
                 errorMessage.style.display = 'block';
                 return;
             }
 
             // مؤشر التحميل البصري
-            checkButton.textContent = 'جاري الفحص...';
+            checkButton.textContent = 'جاري الفحص... [Processing]';
             checkButton.disabled = true;
 
             try {
-                // إرسال الطلب إلى نقطة النهاية analyze في الخادم (Flask)
+                // إرسال الطلب إلى نقطة النهاية analyze في الخادم
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: {
@@ -220,10 +236,10 @@
 
                 const data = await response.json();
 
-                // 2. معالجة الاستجابة الاحترافية (رموز الحالة 400 و 200)
+                // 2. معالجة الاستجابة الاحترافية
                 if (response.status === 400 || data.status === 'validation_error') {
-                    // خطأ التحقق من الصحة (الذي تم تطبيقه في app.py)
-                    errorMessage.textContent = data.message || 'حدث خطأ في معالجة طلبك.';
+                    // خطأ التحقق من الصحة (الرابط غير صحيح)
+                    errorMessage.textContent = `❌ [VALIDATION_FAIL] ${data.message || 'خطأ في صيغة الرابط.'}`;
                     errorMessage.style.display = 'block';
                     resultPanel.innerHTML = '';
                     resultPanel.style.display = 'block';
@@ -235,14 +251,14 @@
                     
                 } else {
                     // أي خطأ آخر غير متوقع (مثل 500)
-                     errorMessage.textContent = '⚠️ خطأ غير متوقع في الخادم: ' + (data.message || 'يرجى المحاولة لاحقاً.');
+                     errorMessage.textContent = '⚠️ [SYSTEM_FAULT] خطأ غير متوقع في الخادم: ' + (data.message || 'يرجى المحاولة لاحقاً.');
                      errorMessage.style.display = 'block';
                      resultPanel.innerHTML = '';
                 }
 
             } catch (error) {
                 console.error('Fetch Error:', error);
-                errorMessage.textContent = '⚠️ خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.';
+                errorMessage.textContent = '⚠️ [CONNECTION_ERROR] خطأ في الاتصال بالشبكة.';
                 errorMessage.style.display = 'block';
                 resultPanel.innerHTML = '';
             } finally {
@@ -259,51 +275,51 @@
             switch (data.status) {
                 case 'success':
                     statusClass = 'status-success';
-                    statusText = '✅ آمن نسبيًا';
+                    statusText = '✅ SECURE';
                     break;
                 case 'warning':
                     statusClass = 'status-warning';
-                    statusText = '⚠️ يحتاج لمراجعة';
+                    statusText = '⚠️ CAUTION';
                     break;
                 case 'error':
                     statusClass = 'status-error';
-                    statusText = '❌ خطر محتمل / غير قابل للوصول';
+                    statusText = '❌ MALICIOUS / OFFLINE';
                     break;
                 default:
                     statusClass = 'status-warning';
-                    statusText = 'غير محدد';
+                    statusText = 'UNKNOWN';
             }
             
             resultPanel.innerHTML = `
                 <div class="result-summary ${statusClass}">
                     <span>النتيجة:</span>
                     <span>${statusText}</span>
-                    <span>نقاط الشك الكلية: ${data.suspicious_points}</span>
+                    <span>نقاط الشك: ${data.suspicious_points}</span>
                 </div>
                 
                 <div class="detail-report">
-                    <h3>📊 تقرير التحليل التفصيلي</h3>
+                    <h3>[ANALYSIS_REPORT]</h3>
                     
                     <div class="detail-row">
-                        <strong>الرابط قيد الفحص:</strong>
-                        <span style="direction: ltr; text-align: left;">${data.link}</span>
+                        <strong>Target URL:</strong>
+                        <span style="direction: ltr; text-align: left; color: var(--cyber-blue);">${data.link}</span>
                     </div>
 
                     <div class="detail-row">
-                        <strong>تصنيف الخطورة:</strong>
-                        <span style="color: ${data.risk_score === 'High' ? var(--danger-color) : (data.risk_score === 'Medium' ? var(--warning-color) : var(--success-color))};">
+                        <strong>Risk Level:</strong>
+                        <span style="color: ${data.risk_score === 'High' ? var(--danger-neon) : (data.risk_score === 'Medium' ? var(--cyber-blue) : var(--cyber-green))};">
                             ${data.risk_score}
                         </span>
                     </div>
 
                     <div class="detail-row">
-                        <strong>عدد التحذيرات المكتشفة:</strong>
+                        <strong>Detected Threats:</strong>
                         <span>${data.detected_warnings}</span>
                     </div>
                 </div>
 
                 <div class="warning-box">
-                    <p style="font-weight: bold; margin-bottom: 5px;">🚨 تحذيرات تفصيلية (محتوى الصفحة):</p>
+                    <p style="font-weight: bold; margin-bottom: 5px;">🚨 [ALERT] Page Content Status:</p>
                     <p>${data.page_content_warning}</p>
                 </div>
             `;
