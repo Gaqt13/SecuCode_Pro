@@ -4,200 +4,231 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مدقق الروابط الأمني</title>
-    <!-- تضمين Tailwind CSS -->
+    <!-- تحميل Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-            background-color: #111827; /* خلفية داكنة */
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* خلفية داكنة جداً */
+            color: #c9d1d9; /* لون النص الفاتح */
         }
-        /* تصميم خاص لزر الإرسال */
-        #analyze-button {
-            transition: all 0.2s ease-in-out;
+        .container {
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
         }
-        #analyze-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        .risk-low { background-color: #238636; } /* أخضر GitHub */
+        .risk-medium { background-color: #d29922; } /* أصفر تحذيري */
+        .risk-high { background-color: #bd2c00; } /* أحمر خطير */
+        .risk-critical { background-color: #e5534b; } /* أحمر حرج */
+        .loading-ring {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center justify-center min-h-screen">
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
 
-    <div class="w-full max-w-2xl">
+    <div class="container max-w-3xl w-full">
+        <!-- عنوان التطبيق -->
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-10 text-white shadow-lg p-2 rounded-lg" style="background: linear-gradient(135deg, #1f2937, #374151);">مدقق الروابط الأمني الشامل</h1>
         
-        <!-- العنوان الرئيسي والوصف -->
-        <header class="text-center mb-10">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-3">
-                مدقق الروابط الأمني 
-            </h1>
-            <p class="text-gray-400 text-lg">أدخل رابط الموقع للتحليل الأمني الفوري</p>
-        </header>
-
-        <!-- صندوق الإدخال -->
-        <div class="bg-gray-800 p-6 rounded-2xl shadow-xl mb-8">
-            <form id="analysis-form" class="space-y-4">
-                <input type="url" id="link-input" placeholder="أدخل رابط الموقع هنا (مثل: https://example.com)" required
-                       class="w-full px-5 py-3 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                <button type="submit" id="analyze-button"
-                        class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    تحليل الرابط الآن
-                </button>
-            </form>
+        <!-- نموذج الإدخال -->
+        <form id="scan-form" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl mb-8 border border-gray-700">
+            <label for="link-input" class="block text-lg font-medium mb-3 text-gray-300">الرجاء إدخال الرابط المراد تحليله:</label>
+            <input type="url" id="link-input" placeholder="https://example.com/phishing-link" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             
-            <!-- رسائل الحالة (خطأ/تحقق) -->
-            <div id="status-message" class="mt-4 hidden p-3 rounded-lg text-center font-medium"></div>
-        </div>
+            <button type="submit" id="scan-button" class="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300 flex items-center justify-center disabled:opacity-50" disabled>
+                <span id="button-text">تحليل الرابط الآن</span>
+                <div id="loading-spinner" class="loading-ring hidden mr-3"></div>
+            </button>
 
-        <!-- مؤشر التحميل -->
-        <div id="loading-spinner" class="hidden text-center mt-8">
-            <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-blue-400 mt-2">جاري التحليل الأمني... قد يستغرق الأمر بضع ثوانٍ</p>
-        </div>
+            <!-- رسالة التحقق والخطأ -->
+            <div id="status-message" class="mt-4 p-3 rounded-lg hidden text-sm font-medium" role="alert"></div>
+        </form>
 
         <!-- منطقة عرض النتائج -->
-        <div id="results-container" class="mt-8 hidden">
-            <!-- سيتم إضافة بطاقة النتائج هنا بواسطة JavaScript -->
-        </div>
+        <div id="result-area" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700 hidden">
+            <h2 class="text-2xl font-bold mb-4 text-white border-b border-gray-700 pb-2">تقرير التحليل الأمني</h2>
+            
+            <div class="space-y-4">
+                <!-- الرابط الذي تم تحليله -->
+                <div class="p-3 bg-gray-700 rounded-lg">
+                    <p class="text-gray-400 text-sm">الرابط:</p>
+                    <p id="analyzed-link" class="text-base break-all text-blue-400 font-mono"></p>
+                </div>
+                
+                <!-- النتيجة والخطورة (بطاقات رئيسية) -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1 p-4 rounded-xl text-center shadow-lg" id="risk-score-card">
+                        <p class="text-sm font-medium text-white mb-1">مستوى الخطورة</p>
+                        <p id="risk-score" class="text-2xl font-bold text-white"></p>
+                    </div>
+                    <div class="flex-1 p-4 bg-gray-700 rounded-xl text-center shadow-lg">
+                        <p class="text-sm font-medium text-gray-300 mb-1">نقاط مشبوهة</p>
+                        <p id="suspicious-points" class="text-2xl font-bold text-yellow-400"></p>
+                    </div>
+                </div>
 
+                <!-- رسالة النتيجة المفصلة -->
+                <div class="p-4 rounded-lg bg-gray-700 shadow-md">
+                    <p class="font-bold text-white mb-2">رسالة التقرير:</p>
+                    <p id="result-message" class="text-base text-gray-300"></p>
+                </div>
+
+                <!-- قسم التفاصيل -->
+                <div class="p-4 bg-gray-700 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold text-white mb-3 border-b border-gray-600 pb-2">التفاصيل الفنية</h3>
+                    <ul class="space-y-2 text-gray-300 text-sm">
+                        <li><span class="font-semibold text-gray-400">عدد التحذيرات المكتشفة:</span> <span id="detected-warnings"></span></li>
+                        <li><span class="font-semibold text-gray-400">تحذير محتوى الصفحة/الحالة:</span> <span id="page-content-warning"></span></li>
+                        <li><span class="font-semibold text-gray-400">رسالة النظام:</span> <span id="system-message"></span></li>
+                    </ul>
+                </div>
+
+                <!-- قائمة القواعد المخترقة والتفصيل -->
+                <div id="violated-rules-area" class="p-4 bg-gray-900 rounded-lg shadow-md hidden">
+                    <h3 class="text-xl font-semibold text-red-400 mb-3 border-b border-gray-700 pb-2">❌ القواعد الأمنية المخترقة وتفاصيل الخطر:</h3>
+                    <div id="violated-rules-list" class="space-y-4">
+                        <!-- هنا سيتم عرض القواعد المخترقة -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        document.getElementById('analysis-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            analyzeLink();
+        const linkInput = document.getElementById('link-input');
+        const scanForm = document.getElementById('scan-form');
+        const scanButton = document.getElementById('scan-button');
+        const buttonText = document.getElementById('button-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const statusMessage = document.getElementById('status-message');
+        const resultArea = document.getElementById('result-area');
+        const riskScoreCard = document.getElementById('risk-score-card');
+        const violatedRulesArea = document.getElementById('violated-rules-area');
+        const violatedRulesList = document.getElementById('violated-rules-list');
+
+        // تفعيل زر التحليل عند وجود نص
+        linkInput.addEventListener('input', () => {
+            scanButton.disabled = linkInput.value.trim() === '';
         });
 
-        const linkInput = document.getElementById('link-input');
-        const statusMessage = document.getElementById('status-message');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const resultsContainer = document.getElementById('results-container');
-        const analyzeButton = document.getElementById('analyze-button');
-
-        // دالة مساعدة لتحديد الألوان بناءً على مستوى الخطورة
-        function getRiskColor(risk) {
-            switch (risk.toLowerCase()) {
-                case 'low': return 'bg-green-600';
-                case 'medium': return 'bg-yellow-500';
-                case 'high': return 'bg-red-600';
-                case 'critical': return 'bg-purple-700';
-                default: return 'bg-gray-500';
-            }
-        }
-
-        // دالة مساعدة لعرض رسالة حالة عامة (خطأ/تحقق)
-        function showStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.classList.remove('hidden', 'bg-red-700', 'bg-yellow-700');
-            statusMessage.classList.add(type === 'error' ? 'bg-red-700' : 'bg-yellow-700', 'text-white');
-            resultsContainer.classList.add('hidden');
-        }
-
-        // الدالة الرئيسية لتحليل الرابط
-        async function analyzeLink() {
+        scanForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const link = linkInput.value.trim();
+            if (!link) return;
+
+            // إخفاء النتائج السابقة وإظهار التحميل
+            resultArea.classList.add('hidden');
             statusMessage.classList.add('hidden');
-            resultsContainer.classList.add('hidden');
+            scanButton.disabled = true;
+            buttonText.textContent = 'جاري التحليل...';
             loadingSpinner.classList.remove('hidden');
-            analyzeButton.disabled = true;
-            analyzeButton.textContent = 'جاري التحليل...';
+            violatedRulesList.innerHTML = ''; // تنظيف القائمة
+
+            const payload = { link: link };
+            const apiUrl = '/analyze'; // نقطة النهاية في تطبيق Flask
 
             try {
-                const response = await fetch('/analyze', {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ link: link }),
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
 
-                if (response.ok) {
-                    displayResults(result);
-                } else if (result.status === 'validation_error') {
-                    showStatus(result.message, 'error');
-                } else {
-                    showStatus(result.message || 'حدث خطأ غير متوقع أثناء التحليل.', 'error');
+                // التعامل مع رسائل التحقق والخطأ
+                if (response.status !== 200 || result.status.includes('validation_error')) {
+                    displayStatusMessage(result.message, 'bg-red-900 border border-red-700 text-red-300');
+                    return;
                 }
 
+                // عرض نتائج التحليل
+                displayResults(result);
+
             } catch (error) {
-                console.error('Fetch Error:', error);
-                showStatus('فشل في الاتصال بالخادم. تأكد من أن الخادم يعمل.', 'error');
+                console.error('Fetch error:', error);
+                displayStatusMessage('❌ خطأ في الاتصال بالخادم. تأكد من تشغيل Flask.', 'bg-red-900 border border-red-700 text-red-300');
             } finally {
+                // إخفاء التحميل وإعادة تفعيل الزر
                 loadingSpinner.classList.add('hidden');
-                analyzeButton.disabled = false;
-                analyzeButton.textContent = 'تحليل الرابط الآن';
+                buttonText.textContent = 'تحليل الرابط الآن';
+                scanButton.disabled = linkInput.value.trim() === '';
+            }
+        });
+
+        function displayStatusMessage(message, classes) {
+            statusMessage.textContent = message;
+            statusMessage.className = `mt-4 p-3 rounded-lg font-medium ${classes}`;
+            statusMessage.classList.remove('hidden');
+        }
+
+        function getRiskClasses(risk) {
+            switch (risk.toLowerCase()) {
+                case 'low':
+                    return 'risk-low';
+                case 'medium':
+                    return 'risk-medium';
+                case 'high':
+                    return 'risk-high';
+                case 'critical':
+                    return 'risk-critical';
+                default:
+                    return 'bg-gray-600';
             }
         }
 
-        // دالة لعرض النتائج بشكل احترافي
-        function displayResults(data) {
-            resultsContainer.classList.remove('hidden');
+        function displayResults(result) {
+            // تحديث البطاقات الرئيسية
+            document.getElementById('analyzed-link').textContent = result.link;
+            document.getElementById('risk-score').textContent = result.risk_score;
+            document.getElementById('suspicious-points').textContent = result.suspicious_points;
+            document.getElementById('result-message').textContent = result.result_message;
+            document.getElementById('detected-warnings').textContent = result.detected_warnings;
+            document.getElementById('page-content-warning').textContent = result.page_content_warning;
+            document.getElementById('system-message').textContent = result.message;
+
+            // تحديث لون بطاقة الخطورة
+            riskScoreCard.className = `flex-1 p-4 rounded-xl text-center shadow-lg ${getRiskClasses(result.risk_score)}`;
+
+            // تحديث قائمة القواعد المخترقة
+            violatedRulesList.innerHTML = '';
             
-            const riskColor = getRiskColor(data.risk_score);
-
-            resultsContainer.innerHTML = `
-                <div class="bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl border-t-8 ${riskColor}">
-                    <h2 class="text-3xl font-extrabold text-white mb-4 border-b border-gray-700 pb-3">
-                        تقرير التحليل الأمني
-                    </h2>
+            if (result.violated_rules && result.violated_rules.length > 0) {
+                violatedRulesArea.classList.remove('hidden');
+                
+                result.violated_rules.forEach(rule => {
+                    const ruleDiv = document.createElement('div');
+                    ruleDiv.className = 'p-3 bg-gray-800 border border-red-600 rounded-lg shadow-inner';
                     
-                    <div class="space-y-4">
-                        <!-- الرابط المحلل -->
-                        <div class="p-3 bg-gray-700 rounded-lg text-sm truncate">
-                            <span class="text-gray-400 font-semibold">الرابط:</span> 
-                            <span class="text-blue-400">${data.link}</span>
-                        </div>
+                    ruleDiv.innerHTML = `
+                        <p class="font-bold text-red-300 mb-1">⚫ ${rule.name} <span class="text-sm font-normal text-red-500">(${rule.points_added} نقطة)</span></p>
+                        <p class="text-sm text-gray-400 border-t border-gray-700 pt-1">الخطر المُحتمل: ${rule.risk_description}</p>
+                    `;
+                    violatedRulesList.appendChild(ruleDiv);
+                });
+            } else {
+                violatedRulesArea.classList.add('hidden');
+            }
 
-                        <!-- رسالة النتيجة الرئيسية -->
-                        <div class="flex flex-col items-center justify-center p-4 rounded-xl ${riskColor} text-white font-bold text-xl shadow-lg">
-                            ${data.result_message}
-                        </div>
-
-                        <!-- بطاقات الإحصائيات -->
-                        <div class="grid grid-cols-2 gap-4 text-center">
-                            
-                            <!-- مستوى الخطورة -->
-                            <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
-                                <p class="text-gray-400 text-sm">مستوى الخطورة</p>
-                                <p class="text-white text-2xl font-bold">${data.risk_score}</p>
-                            </div>
-                            
-                            <!-- النقاط المشبوهة -->
-                            <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
-                                <p class="text-gray-400 text-sm">نقاط مشبوهة</p>
-                                <p class="text-white text-2xl font-bold">${data.suspicious_points}</p>
-                            </div>
-                        </div>
-
-                        <!-- تفاصيل التحذيرات -->
-                        <div class="bg-gray-700 p-4 rounded-xl border border-gray-600">
-                            <h3 class="text-lg font-bold text-white mb-2">
-                                التفاصيل
-                            </h3>
-                            <ul class="space-y-2 text-gray-300 text-sm">
-                                <li class="flex justify-between items-center border-b border-gray-600 pb-1">
-                                    <span class="font-semibold">عدد التحذيرات المكتشفة:</span> 
-                                    <span>${data.detected_warnings}</span>
-                                </li>
-                                <li class="pt-1">
-                                    <span class="font-semibold text-gray-400">تحذير محتوى الصفحة:</span><br>
-                                    <span class="text-gray-300">${data.page_content_warning}</span>
-                                </li>
-                                <li class="pt-1">
-                                    <span class="font-semibold text-gray-400">رسالة النظام:</span><br>
-                                    <span class="text-gray-300">${data.message}</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            `;
+            // إظهار منطقة النتائج
+            resultArea.classList.remove('hidden');
         }
     </script>
 </body>
 </html>
+
 
