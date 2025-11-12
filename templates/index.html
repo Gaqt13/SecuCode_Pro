@@ -1,1 +1,51 @@
-hjgkg
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة اختبار</title>
+    <!-- تضمين Tailwind CSS لتصميم سريع وجميل -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* تعيين خط Inter الأساسي، مع دعم الخطوط العربية */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8 flex items-center justify-center min-h-screen">
+    <!-- حاوية مركزية للتطبيق -->
+    <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl w-full max-w-md text-center border-t-4 border-blue-500">
+        <!-- العنوان الرئيسي - هذا هو النص الذي يمكنك تجربته وتغييره -->
+        <h1 id="main-title" class="text-3xl font-extrabold text-gray-800 mb-4">
+            مرحباً! قم بتعديل هذا العنوان الآن
+        </h1>
+        
+        <!-- فقرة توضيحية -->
+        <p class="text-gray-600 mb-6 leading-relaxed">
+            لترى التغيير، قم بتحرير النص أعلاه، ثم حدث المعاينة. يجب أن يظهر النص الجديد بدلاً من هذا.
+        </p>
+        
+        <!-- زر للتفاعل -->
+        <button onclick="alert('تم النقر على الزر!')"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
+            زر تجريبي
+        </button>
+    </div>
+
+    <script>
+        // دالة لعرض رسالة (بدلاً من alert)
+        function alert(message) {
+            const container = document.getElementById('message-container');
+            if (container) {
+                container.textContent = message;
+                container.classList.remove('hidden');
+                setTimeout(() => container.classList.add('hidden'), 3000);
+            } else {
+                console.log(message);
+            }
+        }
+    </script>
+</body>
+</html>
+
