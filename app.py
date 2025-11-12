@@ -1,19 +1,17 @@
 import os
+import time  # ✅ لإضافة متغير الوقت لحل مشكلة الكاش
 from flask import Flask, request, jsonify, render_template
-from validators import url  # المكتبة الضرورية للتحقق من الروابط
+from validators import url  # ✅ للتحقق الاحترافي من الروابط
 import requests
 import json
 
 app = Flask(__name__)
 
-# --- دالة التحليل الأمني (يجب أن تحتوي على منطقك الأصلي) ---
+# --- دالة التحليل الأمني (منطق العمل) ---
+# يجب أن تحتوي على منطقك الأصلي، وهنا مثال للحقول التي يجب إعادتها
 def perform_security_scan(link):
-    """
-    تقوم بتنفيذ عملية الفحص الأمني الحقيقية على الرابط.
-    هذا هو المنطق الذي يعيد النتيجة الأصلية لمشروعك.
-    """
     try:
-        # مثال بسيط (يمكنك استبداله بمنطقك الأصلي)
+        # محاولة الاتصال بالرابط لتأكيد وجوده (مثال)
         response = requests.get(link, timeout=5, allow_redirects=True) 
         
         if response.status_code == 200:
@@ -40,7 +38,6 @@ def perform_security_scan(link):
             }
             
     except requests.exceptions.RequestException:
-        # التعامل مع أخطاء الاتصال
         return {
             "status": "error",
             "message": "خطأ في الاتصال بالرابط.",
@@ -52,10 +49,12 @@ def perform_security_scan(link):
             "page_content_warning": "فشل حاد في الاتصال بالرابط أو حدوث مهلة (Timeout)."
         }
 
-# --- نقطة النهاية الرئيسية (عرض الصفحة) ---
+# --- نقطة النهاية الرئيسية (حل مشكلة الكاش) ---
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    # ✅ إضافة متغير الوقت لإجبار المتصفح على تحميل نسخة جديدة في كل مرة
+    cache_buster = int(time.time()) 
+    return render_template('index.html', cache_buster=cache_buster)
 
 
 # --- نقطة النهاية للتحليل (بمنطق التحقق الثابت) ---
@@ -80,7 +79,7 @@ def analyze_link():
             "error_code": 400
         }), 400
 
-    # 2. التحقق من صيغة الرابط (لحل مشكلة إعطاء نتيجة للحروف العشوائية)
+    # 2. ✅ التحقق من صيغة الرابط (لحل مشكلة إعطاء نتيجة للحروف العشوائية)
     if url(link_to_analyze) is not True:
         return jsonify({
             "status": "validation_error",
