@@ -2,246 +2,134 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecuCode - كاشف الروابط المشبوهة</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SecuCode - نظام تحليل الروابط الاحترافي</title>
     <style>
-        :root {
-            --primary-color: #4A90E2; 
-            --secondary-color: #50E3C2; 
-            --background-start: #f6f8fa;
-            --background-end: #e0e6ed;
-            --card-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        body {
-            background-image: linear-gradient(135deg, #f9fafb 0%, #eef2ff 100%);
-            min-height: 100vh;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
+        /* ... كود CSS الخاص بك لتصميم الصفحة ... */
+        .container {
+            /* ... خصائص الحاوية ... */
+            max-width: 500px;
+            margin: 50px auto;
             padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background-color: #fff;
         }
-        .card-custom {
-            box-shadow: var(--card-shadow);
-            border-radius: 1.5rem; 
-            border: none;
-            max-width: 650px;
-            overflow: hidden; 
+        .error-message {
+            background-color: #ffe0e0;
+            color: #d32f2f;
+            border: 1px solid #d32f2f;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: none; /* يتم إظهاره فقط عند وجود خطأ */
         }
-        .header-bg {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 30px 0;
+        .result-panel {
+            /* ... تصميم لوحة النتائج ... */
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #eee;
         }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            transition: background-color 0.3s;
-        }
-        .btn-primary:hover {
-            background-color: #3b7ad7; 
-            border-color: #3b7ad7; 
-        }
-
-        .result-box {
-            min-height: 80px;
-            padding: 20px;
-            border-radius: 0.75rem;
-            border-left: 5px solid; 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-        
-        .text-safe { color: #008033; } 
-        .bg-safe { background-color: #e6ffed; border-left-color: #008033; }
-
-        .text-warn { color: #b37400; }
-        .bg-warn { background-color: #fff8e6; border-left-color: #b37400; }
-
-        .text-danger { color: #cc0000; }
-        .bg-danger { background-color: #ffe6e6; border-left-color: #cc0000; }
     </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': '#3b82f6',
-                        'safe': '#10b981',
-                        'warn': '#f59e0b',
-                        'danger': '#ef4444',
-                    }
-                }
-            }
-        }
-    </script>
 </head>
-<body class="flex justify-center items-center">
-    <div class="w-full max-w-xl">
-        <div class="bg-white rounded-xl shadow-2xl overflow-hidden card-custom">
-            <div class="bg-primary text-white p-6 text-center rounded-t-xl header-bg">
-                <h1 class="text-3xl font-bold mb-1">🔍 SecuCode</h1>
-                <p class="text-sm opacity-90">نظام تحليل الروابط الاحترافي</p>
+<body>
+
+    <div class="container">
+        <h2>SecuCode 🔍</h2>
+        <p>نظام تحليل الروابط الاحترافي</p>
+        
+        <input type="text" id="linkInput" placeholder="أدخل الرابط الذي تشك به لفحصه أمنياً" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+        
+        <button id="checkButton" style="width: 100%; padding: 10px; background-color: #4A90E2; color: white; border: none; border-radius: 4px; cursor: pointer;">افحص الرابط الآن</button>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="resultPanel" class="result-panel">
             </div>
-
-            <div class="p-6 md:p-8">
-                <p class="mb-4 text-gray-700">أدخل الرابط الذي تشك به لفحصه أمنياً:</p>
-                
-                <div class="mb-5">
-                    <input type="url" id="linkInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary text-lg" placeholder="مثال: https://suspect.com/login" required>
-                </div>
-                
-                <button onclick="checkLink()" id="checkButton" class="btn-primary text-white py-3 px-4 rounded-lg font-semibold w-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300">
-                    <span id="buttonText">افحص الرابط الآن</span>
-                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-
-                <div id="result" class="mt-6 p-4 rounded-lg font-bold text-base border-l-4 border-primary bg-blue-50/50 text-primary transition-all duration-500 result-box">
-                    النتائج ستظهر هنا بعد الفحص...
-                </div>
-
-                <div id="detailedReport" class="mt-6 p-6 bg-white border border-gray-200 rounded-xl hidden">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">📊 تقرير التحليل التفصيلي</h3>
-                    <ul id="reportItems" class="space-y-3 text-sm text-gray-700">
-                        </ul>
-                </div>
-
-                <div id="warningsList" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 hidden">
-                    <h3 class="text-lg font-semibold mb-2 text-gray-800">⚠️ تحذيرات تفصيلية في محتوى الصفحة:</h3>
-                    <ul id="warningItems" class="list-disc pr-5 space-y-1 text-sm text-gray-600">
-                        </ul>
-                </div>
-
-            </div>
-        </div>
     </div>
 
     <script>
-        async function checkLink() {
-            const link = document.getElementById('linkInput').value;
-            const resultDiv = document.getElementById('result');
-            const button = document.getElementById('checkButton');
-            const buttonText = document.getElementById('buttonText');
-            const spinner = document.getElementById('spinner');
-            const warningsListDiv = document.getElementById('warningsList');
-            const warningItemsUl = document.getElementById('warningItems');
-            // ✅ إضافة متغيرات التقرير
-            const detailedReportDiv = document.getElementById('detailedReport'); 
-            const reportItemsUl = document.getElementById('reportItems');      
+        document.getElementById('checkButton').addEventListener('click', async () => {
+            const linkInput = document.getElementById('linkInput');
+            const resultPanel = document.getElementById('resultPanel');
+            const errorMessage = document.getElementById('errorMessage');
+            const link = linkInput.value.trim();
 
-            // تهيئة حالة التحميل
-            resultDiv.className = 'mt-6 p-4 rounded-lg font-bold text-base border-l-4 border-primary bg-blue-50/50 text-primary transition-all duration-500 result-box';
-            resultDiv.innerHTML = "جاري التحليل... <span class='text-sm font-normal'>(يتم فحص 10 قواعد أمنية)</span>";
-            warningsListDiv.classList.add('hidden'); 
-            detailedReportDiv.classList.add('hidden'); // ✅ إخفاء التقرير عند البدء
-            button.disabled = true;
-            buttonText.textContent = "جاري الفحص...";
-            spinner.classList.remove('hidden');
-
+            // 1. تنظيف النتائج والرسائل السابقة
+            errorMessage.style.display = 'none';
+            resultPanel.innerHTML = 'جاري التحليل...';
+            
             if (!link) {
-                resultDiv.className = 'mt-6 p-4 rounded-lg font-bold text-base border-l-4 border-danger bg-red-50 text-danger result-box';
-                resultDiv.innerHTML = "❌ الرجاء إدخال رابط صالح لبدء الفحص.";
-                resetButton(button, buttonText, spinner);
+                errorMessage.textContent = '❌ فشل التحقق: الرجاء إدخال رابط. حقل الرابط لا يمكن أن يكون فارغاً.';
+                errorMessage.style.display = 'block';
+                resultPanel.innerHTML = '';
                 return;
             }
 
             try {
-                const apiUrl = '/check_link'; 
-                
-                const response = await fetch(apiUrl, {
+                // إرسال الطلب إلى نقطة النهاية analyze في الخادم
+                const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ link: link })
                 });
 
                 const data = await response.json();
 
-                if (data.error) {
-                    resultDiv.className = 'mt-6 p-4 rounded-lg font-bold text-base border-l-4 border-danger bg-red-50 text-danger result-box';
-                    resultDiv.innerHTML = `خطأ في الخادم: ${data.error}`;
+                // 2. معالجة الاستجابة الاحترافية: 
+                // إذا كان رمز الحالة 400 (خطأ في التحقق من صحة الرابط)، نعرض الرسالة الخاصة بالخادم.
+                if (response.status === 400) {
+                    // عرض رسالة الخطأ من الخادم
+                    errorMessage.textContent = data.message || 'حدث خطأ في معالجة طلبك.';
+                    errorMessage.style.display = 'block';
+                    resultPanel.innerHTML = '';
+                    return;
+                }
+                
+                // 3. معالجة النتائج الناجحة أو تحذيرات التحليل
+                if (response.status === 200) {
+                    displayAnalysisResult(data);
                 } else {
-                    let borderColor, bgColor, textColor, resultText;
-                    
-                    if (data.certainty === 'High') {
-                        borderColor = 'border-danger';
-                        bgColor = 'bg-red-50';
-                        textColor = 'text-danger';
-                        resultText = "🔴 خطر جسيم (خطر احتيال مؤكد)";
-                    } else if (data.certainty === 'Medium') {
-                        borderColor = 'border-warn';
-                        bgColor = 'bg-yellow-50';
-                        textColor = 'text-warn';
-                        resultText = "🟡 مشتبه به (يحتوي على عناصر مريبة)";
-                    } else {
-                        borderColor = 'border-safe';
-                        bgColor = 'bg-green-50';
-                        textColor = 'text-safe';
-                        resultText = "🟢 آمن نسبياً";
-                    }
-                    
-                    resultDiv.className = `mt-6 p-4 rounded-lg font-bold text-base border-l-4 ${borderColor} ${bgColor} ${textColor} transition-all duration-500 result-box`;
-                    resultDiv.innerHTML = `
-                        <div>النتيجة: <strong>${resultText}</strong></div>
-                        <div class='text-sm font-normal mt-1'>نقاط الشك الكلية: <strong>${data.score}</strong></div>
-                    `;
-                    
-                    // ✅ ملء قسم التقرير التفصيلي
-                    reportItemsUl.innerHTML = '';
-                    
-                    const reportData = [
-                        { label: "الرابط المُرسل", value: data.link.substring(0, 50) + (data.link.length > 50 ? '...' : ''), icon: "🔗" },
-                        { label: "تصنيف الخطورة", value: data.certainty, icon: "⚠️" },
-                        { label: "مجموع نقاط الشك", value: data.score, icon: "🎯" },
-                        { label: "عدد التحذيرات المكتشفة", value: data.warnings.length, icon: "🚨" },
-                    ];
-
-                    reportData.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'flex justify-between items-center pb-2 border-b border-gray-100 last:border-b-0';
-                        li.innerHTML = `
-                            <span class="font-medium text-gray-600">${item.icon} ${item.label}</span>
-                            <span class="font-semibold text-gray-800">${item.value}</span>
-                        `;
-                        reportItemsUl.appendChild(li);
-                    });
-                    
-                    detailedReportDiv.classList.remove('hidden'); // إظهار التقرير
-
-                    
-                    // عرض التحذيرات المفصلة
-                    if (data.warnings && data.warnings.length > 0) {
-                        warningItemsUl.innerHTML = ''; 
-                        data.warnings.forEach(warning => {
-                            const li = document.createElement('li');
-                            li.textContent = warning;
-                            warningItemsUl.appendChild(li);
-                        });
-                        warningsListDiv.classList.remove('hidden');
-                        
-                        warningsListDiv.className = `mt-4 p-3 rounded-lg border text-base border-l-4 ${borderColor} ${bgColor} ${textColor}`;
-                    } else {
-                        warningsListDiv.classList.add('hidden');
-                    }
+                    // أي خطأ آخر غير 400 (مثل 500 خطأ داخلي في الخادم)
+                     errorMessage.textContent = '⚠️ حدث خطأ غير متوقع في الخادم: ' + (data.message || 'يرجى المحاولة لاحقاً.');
+                     errorMessage.style.display = 'block';
+                     resultPanel.innerHTML = '';
                 }
 
             } catch (error) {
                 console.error('Fetch Error:', error);
-                resultDiv.className = 'mt-6 p-4 rounded-lg font-bold text-base border-l-4 border-danger bg-red-50 text-danger result-box';
-                resultDiv.innerHTML = "❌ فشل الاتصال بالخادم. الرجاء التأكد من أن API Flask يعمل بشكل صحيح."; 
-            } finally {
-                resetButton(button, buttonText, spinner);
+                errorMessage.textContent = '⚠️ خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت.';
+                errorMessage.style.display = 'block';
+                resultPanel.innerHTML = '';
             }
-        }
-        
-        function resetButton(button, buttonText, spinner) {
-            button.disabled = false;
-            buttonText.textContent = "افحص الرابط الآن";
-            spinner.classList.add('hidden');
+        });
+
+        // دالة لعرض النتائج بشكل مُنظم كما في صورتك الأولى
+        function displayAnalysisResult(data) {
+            let statusColor = data.status === 'success' ? '#4CAF50' : (data.status === 'warning' ? '#FFC107' : '#F44336');
+            let statusText = data.status === 'success' ? '✅ آمن نسبيًا' : (data.status === 'warning' ? '⚠️ يحتاج لمراجعة' : '❌ خطر محتمل');
+            
+            resultPanel.innerHTML = `
+                <div style="background-color: ${statusColor}; color: white; padding: 10px; border-radius: 4px; text-align: center;">
+                    النتيجة: <strong>${statusText}</strong>
+                    <br>نقاط الشك الكلية: ${data.suspicious_points}
+                </div>
+                
+                <h3 style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">📊 تقرير التحليل التفصيلي</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <p><strong>الرابط قيد الفحص:</strong> ${data.link}</p>
+                    <p><strong>تصنيف الخطورة:</strong> ❗ ${data.risk_score}</p>
+                    <p><strong>عدد التحذيرات المكتشفة:</strong> ${data.detected_warnings}</p>
+                </div>
+
+                <div style="margin-top: 15px; padding: 10px; background-color: #fff9c4; border: 1px solid #ffeb3b; border-radius: 4px;">
+                    <p>🚨 تحذيرات تفصيلية في محتوى الصفحة:</p>
+                    <p>• ${data.page_content_warning}</p>
+                </div>
+            `;
         }
     </script>
 </body>
