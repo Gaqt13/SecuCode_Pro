@@ -1,25 +1,22 @@
 import os
 from flask import Flask, request, jsonify, render_template
-from validators import url  # استيراد دالة التحقق
+from validators import url  # المكتبة الضرورية للتحقق من الروابط
 import requests
 import json
 
 app = Flask(__name__)
 
-# --- دالة التحليل الأمني (افتراضية) ---
-# يجب عليك استبدال هذا المنطق بالمنطق الحقيقي لمشروعك (SecuCode)
+# --- دالة التحليل الأمني (يجب أن تحتوي على منطقك الأصلي) ---
 def perform_security_scan(link):
     """
     تقوم بتنفيذ عملية الفحص الأمني الحقيقية على الرابط.
-    هذه الدالة يجب أن تُحدَّث للتعامل مع أخطاء الاتصال/Timeout بشكل سليم.
+    هذا هو المنطق الذي يعيد النتيجة الأصلية لمشروعك.
     """
     try:
-        # محاولة الاتصال بالرابط لتأكيد وجوده (اختياري، يمكنك استخدام منطقك الخاص)
+        # مثال بسيط (يمكنك استبداله بمنطقك الأصلي)
         response = requests.get(link, timeout=5, allow_redirects=True) 
         
-        # مثال لمنطق بسيط جداً للنتائج:
         if response.status_code == 200:
-            # مثال لتقرير تفصيلي
             return {
                 "status": "success",
                 "message": "تحليل مكتمل.",
@@ -28,7 +25,7 @@ def perform_security_scan(link):
                 "risk_score": "Low",
                 "suspicious_points": 2,
                 "detected_warnings": 1,
-                "page_content_warning": "تحذير: تم جلب محتوى الصفحة بنجاح."
+                "page_content_warning": "تم جلب محتوى الصفحة بنجاح."
             }
         else:
             return {
@@ -42,14 +39,14 @@ def perform_security_scan(link):
                 "page_content_warning": f"فشل في جلب محتوى الصفحة. رمز الحالة: {response.status_code}"
             }
             
-    except requests.exceptions.RequestException as e:
-        # التعامل مع أخطاء الاتصال، Timeout، أو الروابط غير القابلة للوصول
+    except requests.exceptions.RequestException:
+        # التعامل مع أخطاء الاتصال
         return {
             "status": "error",
             "message": "خطأ في الاتصال بالرابط.",
             "link": link,
             "result_message": "غير قابل للوصول.",
-            "risk_score": "High", # نرفع درجة الخطورة إذا لم نتمكن من الوصول
+            "risk_score": "High",
             "suspicious_points": 10,
             "detected_warnings": 3,
             "page_content_warning": "فشل حاد في الاتصال بالرابط أو حدوث مهلة (Timeout)."
@@ -58,30 +55,24 @@ def perform_security_scan(link):
 # --- نقطة النهاية الرئيسية (عرض الصفحة) ---
 @app.route('/', methods=['GET'])
 def index():
-    # افترض أن ملف الواجهة الأمامية هو index.html داخل مجلد templates
     return render_template('index.html')
 
 
-# --- نقطة النهاية للتحليل (تطبيق التحقق الاحترافي) ---
+# --- نقطة النهاية للتحليل (بمنطق التحقق الثابت) ---
 @app.route('/analyze', methods=['POST'])
 def analyze_link():
-    """
-    نقطة النهاية لمعالجة طلب فحص الرابط مع التحقق الاحترافي.
-    """
     
-    # 1. استلام الرابط من الطلب
     try:
         data = request.get_json()
         link_to_analyze = data.get('link')
     except Exception:
-        # خطأ في صيغة JSON
         return jsonify({
             "status": "critical_error",
             "message": "خطأ في معالجة بيانات الطلب (JSON).",
             "error_code": 400
         }), 400
 
-    # 2. التحقق من وجود الرابط (الرابط فارغ)
+    # 1. التحقق من أن الحقل ليس فارغاً
     if not link_to_analyze or link_to_analyze.strip() == "":
         return jsonify({
             "status": "validation_error",
@@ -89,21 +80,19 @@ def analyze_link():
             "error_code": 400
         }), 400
 
-    # 3. التحقق الاحترافي من صيغة الرابط (باستخدام مكتبة validators)
+    # 2. التحقق من صيغة الرابط (لحل مشكلة إعطاء نتيجة للحروف العشوائية)
     if url(link_to_analyze) is not True:
-        # إرجاع استجابة خطأ HTTP 400 (Bad Request)
         return jsonify({
             "status": "validation_error",
-            "message": "❌ فشل التحقق: الإدخال غير صحيح. الرجاء إدخال رابط حقيقي وصالح بصيغة URL (مثل: https://example.com).",
+            "message": "❌ الإدخال غير صحيح. الرجاء إدخال رابط حقيقي وصالح بصيغة URL.",
             "error_code": 400
         }), 400
 
-    # 4. المتابعة إلى منطق التحليل
+    # 3. المتابعة إلى منطق التحليل
     analysis_result = perform_security_scan(link_to_analyze) 
     
     return jsonify(analysis_result), 200
 
-# تشغيل التطبيق محلياً (لا يتم استخدامه في Vercel عادةً)
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
